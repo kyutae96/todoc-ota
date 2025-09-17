@@ -6,6 +6,7 @@ import { OtaSession, Device } from './data';
 export async function getDevices(): Promise<Device[]> {
     try {
         const deviceDocs = await getDocs(collection(db, 'devices'));
+        console.log("Fetched device documents:", deviceDocs.docs);
         const devices = deviceDocs.docs.map(doc => ({
             id: doc.id
         }));
