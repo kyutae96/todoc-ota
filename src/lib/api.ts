@@ -1,11 +1,12 @@
-import { collection, getDocs, doc, getDoc, query, orderBy, limit } from 'firebase/firestore';
+
+import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup } from 'firebase/firestore';
 import { ref, listAll, getMetadata, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
-import { users, products, storageFiles, devices, User, Product, StorageFile, Device, otaSessions, OtaSession } from './data';
+import { users, products, storageFiles, devices, User, Product, StorageFile, OtaSession } from './data';
 
 const LATENCY = 1000;
 
-type CollectionData = User | Product | Omit<Device, 'otaSessions' | 'slotHistory'>;
+type CollectionData = User | Product;
 
 export async function getCollection(collectionName: 'users' | 'products' | 'devices'): Promise<any[]> {
   console.log(`Fetching collection: ${collectionName}`);
@@ -28,8 +29,8 @@ export async function getCollection(collectionName: 'users' | 'products' | 'devi
 
 
 export async function getOtaSessions(): Promise<OtaSession[]> {
-    console.log('Fetching all ota sessions');
-    const sessionsRef = collection(db, 'otaSessions');
+    console.log('Fetching all ota sessions using collectionGroup');
+    const sessionsRef = collectionGroup(db, 'otaSessions');
     const q = query(sessionsRef, orderBy('startedAt', 'desc'));
     const querySnapshot = await getDocs(q);
     const sessions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as OtaSession[];
@@ -42,17 +43,26 @@ export async function getOtaSessions(): Promise<OtaSession[]> {
 }
 
 export async function getOtaSession(sessionId: string): Promise<OtaSession | undefined> {
-    console.log(`Fetching ota session: ${sessionId}`);
-    const sessionRef = doc(db, 'otaSessions', sessionId);
-    const sessionSnap = await getDoc(sessionRef);
+    console.log(`Fetching ota session: ${sessionId} using collectionGroup`);
+    const sessionsQuery = query(collectionGroup(db, 'otaSessions'));
+    const sessionsSnapshot = await getDocs(sessionsQuery);
+    
+    let sessionDoc;
+    for (const doc of sessionsSnapshot.docs) {
+        if (doc.id === sessionId) {
+            sessionDoc = doc;
+            break;
+        }
+    }
 
-    if (!sessionSnap.exists()) {
+    if (!sessionDoc || !sessionDoc.exists()) {
+        console.log(`Session ${sessionId} not found`);
         return undefined;
     }
 
-    const sessionData = { id: sessionSnap.id, ...sessionSnap.data() } as OtaSession;
+    const sessionData = { id: sessionDoc.id, ...sessionDoc.data() } as OtaSession;
     
-    const eventsRef = collection(db, 'otaSessions', sessionId, 'events');
+    const eventsRef = collection(sessionDoc.ref, 'events');
     const eventsQuery = query(eventsRef, orderBy('at', 'desc'));
     const eventsSnapshot = await getDocs(eventsQuery);
     const events = eventsSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));

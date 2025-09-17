@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -32,7 +33,7 @@ export type OtaSession = {
   deviceId: string;
   userId: string;
   startedAt: Date;
-  endedAt: Date;
+  endedAt: Date | null;
   status: 'completed' | 'failed' | 'in-progress';
   slotSelected: 'A' | 'B';
   sourcePath: string;
@@ -68,10 +69,15 @@ export type SlotHistory = {
     sessionId: string;
 }
 
+// The 'devices' collection is implicitly defined by your schema, 
+// where each document ID is a deviceName.
+// The top-level device documents may not have other fields besides the subcollections.
 export type Device = {
-    id: string; // deviceName
-    otaSessions: OtaSession[];
-    slotHistory: SlotHistory[];
+    id: string; // This will be the deviceName
+    // Other top-level device fields if they exist
+    name?: string;
+    status?: string;
+    lastSeen?: Date;
 }
 
 
@@ -195,17 +201,11 @@ export const otaSessions: OtaSession[] = [
 export const devices: Device[] = [
     { 
         id: 'device-001',
-        otaSessions: [otaSessions[0], otaSessions[2]],
-        slotHistory: [],
     },
     { 
         id: 'device-002',
-        otaSessions: [otaSessions[1]],
-        slotHistory: [],
     },
     { 
         id: 'device-003',
-        otaSessions: [],
-        slotHistory: [],
     },
 ];
