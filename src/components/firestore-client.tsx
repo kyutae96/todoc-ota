@@ -33,12 +33,12 @@ import { dataSummaryForManagers } from '@/ai/flows/data-summary-for-managers';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 type CollectionName = 'users' | 'products' | 'devices';
-type DataItem = User | Product | Omit<Device, 'otaSessions' | 'slotHistory'>;
+type DataItem = User | Product | Omit<Device, 'otaSessions' | 'slotHistory'> & { name?: string, status?: string, lastSeen?: Date };
 
 const collectionFields: Record<CollectionName, (keyof DataItem)[]> = {
   users: ['id', 'name', 'email', 'role', 'status', 'lastLogin'],
   products: ['id', 'name', 'category', 'price', 'stock', 'createdAt'],
-  devices: ['id'],
+  devices: ['id', 'name', 'status', 'lastSeen'],
 };
 
 const PAGE_SIZE = 5;
@@ -67,6 +67,7 @@ export function FirestoreClient() {
         // Convert ISO strings back to Date objects
         if (newItem.lastLogin) newItem.lastLogin = new Date(newItem.lastLogin);
         if (newItem.createdAt) newItem.createdAt = new Date(newItem.createdAt);
+        if (newItem.lastSeen) newItem.lastSeen = new Date(newItem.lastSeen);
         return newItem;
       }) as DataItem[]);
     });
@@ -92,21 +93,20 @@ export function FirestoreClient() {
       );
     }
     
-    if (sortBy) {
-        filtered.sort((a, b) => {
-            const aValue = a[sortBy as keyof typeof a];
-            const bValue = b[sortBy as keyof typeof b];
+    if (!sortBy) return filtered;
 
-            if (aValue === undefined || aValue === null) return 1;
-            if (bValue === undefined || bValue === null) return -1;
-            
-            if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-            if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-            return 0;
-        });
-    }
-
-    return filtered;
+    const copy = [...filtered];
+    copy.sort((a, b) => {
+      const av = a[sortBy] as any;
+      const bv = b[sortBy] as any;
+  
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (av < bv) return sortOrder === 'asc' ? -1 : 1;
+      if (av > bv) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return copy;
   }, [data, filter, sortBy, sortOrder]);
 
 
@@ -127,7 +127,7 @@ export function FirestoreClient() {
       return `$${Number(value).toFixed(2)}`;
     }
     if (field === 'status' && typeof value === 'string') {
-        return <Badge variant={value === 'active' ? 'default' : 'secondary'} className={value === 'active' ? 'bg-green-500/20 text-green-700 border-green-500/30' : ''}>{value}</Badge>
+        return <Badge variant={value === 'active' || value === 'online' ? 'default' : 'secondary'} className={value === 'active' || value === 'online' ? 'bg-green-500/20 text-green-700 border-green-500/30' : ''}>{value}</Badge>
     }
     if (field === 'role' && typeof value === 'string') {
         return <Badge variant="outline">{value}</Badge>

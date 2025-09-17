@@ -11,11 +11,11 @@ const firebaseConfig = {
   // TODO: Replace with your actual project ID from the Firebase console.
   "projectId": "todoc-ota",
   // TODO: Replace with your actual app ID from the Firebase console.
-  "appId": "1:1003104102687:web:973807fd304b15c446282a",
+  "appId": "1:995016378087:web:3c702cecc5d02579cbc442",
   // TODO: Replace with your actual storage bucket from the Firebase console.
   "storageBucket": "todoc-ota.appspot.com",
   // TODO: Replace with your actual API key from the Firebase console.
-  "apiKey": "AIzaSyC50olFk62pBKZfxVpq6ynd-o4eJudxuJc",
+  "apiKey": "AIzaSyAioH5aUo19iEWtSyqrkm21scRLkI3nhts",
   // TODO: Replace with your actual auth domain from the Firebase console.
   "authDomain": "todoc-ota.firebaseapp.com",
   "measurementId": "",
