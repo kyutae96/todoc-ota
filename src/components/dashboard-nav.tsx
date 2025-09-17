@@ -19,8 +19,9 @@ export function DashboardNav() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={item.href} asChild>
+          <Link href={item.href} legacyBehavior passHref>
             <SidebarMenuButton
+              as="a"
               className={cn(
                 'group-data-[collapsible=icon]:justify-center',
                 'group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10'
