@@ -6,13 +6,27 @@ import { OtaSession, Device } from './data';
 
 export async function getDevices(): Promise<Device[]> {
     try {
-        const deviceDocs = await getDocs(collection(db, 'devices'));
-        const devices = deviceDocs.docs.map(doc => ({
-            id: doc.id
+        // Query the 'otaSessions' collection group to get all sessions.
+        const sessionsQuery = query(collectionGroup(db, 'otaSessions'));
+        const sessionsSnapshot = await getDocs(sessionsQuery);
+        
+        // Use a Set to store unique device names from the sessions.
+        const deviceNames = new Set<string>();
+        sessionsSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.deviceName) {
+                deviceNames.add(data.deviceName);
+            }
+        });
+
+        // Convert the Set of device names into the Device[] format.
+        const devices = Array.from(deviceNames).map(name => ({
+            id: name
         }));
+
         return devices.sort((a,b) => a.id.localeCompare(b.id));
     } catch (error) {
-        console.error("Error fetching devices:", error);
+        console.error("Error fetching devices from sessions:", error);
         return [];
     }
 }
