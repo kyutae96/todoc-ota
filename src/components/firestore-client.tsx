@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getCollection } from '@/lib/api';
-import { type User, type Product } from '@/lib/data';
+import { type User, type Product, type Device } from '@/lib/data';
 import {
   ArrowUpDown,
   BrainCircuit,
@@ -32,12 +32,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { dataSummaryForManagers } from '@/ai/flows/data-summary-for-managers';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
-type CollectionName = 'users' | 'products';
-type DataItem = User | Product;
+type CollectionName = 'users' | 'products' | 'devices';
+type DataItem = User | Product | Omit<Device, 'otaSessions' | 'slotHistory'>;
 
 const collectionFields: Record<CollectionName, (keyof DataItem)[]> = {
   users: ['id', 'name', 'email', 'role', 'status', 'lastLogin'],
   products: ['id', 'name', 'category', 'price', 'stock', 'createdAt'],
+  devices: ['id'],
 };
 
 const PAGE_SIZE = 5;
@@ -49,7 +50,7 @@ export function FirestoreClient() {
   const [isSummarizing, startSummaryTransition] = useTransition();
 
   const [filter, setFilter] = useState('');
-  const [sortBy, setSortBy] = useState<keyof DataItem | null>('createdAt');
+  const [sortBy, setSortBy] = useState<keyof DataItem | null>('id');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [summary, setSummary] = useState<string | null>(null);
@@ -112,8 +113,15 @@ export function FirestoreClient() {
 
   const formatCell = (item: DataItem, field: keyof DataItem) => {
     const value = item[field as keyof typeof item];
+
     if (value instanceof Date) {
       return value.toLocaleDateString();
+    }
+    if (field === 'lastLogin' && 'lastLogin' in item) {
+        return new Date(item.lastLogin).toLocaleString();
+    }
+    if (field === 'createdAt' && 'createdAt' in item) {
+        return new Date(item.createdAt).toLocaleDateString();
     }
     if (field === 'price') {
       return `$${Number(value).toFixed(2)}`;
@@ -163,6 +171,7 @@ export function FirestoreClient() {
           <SelectContent>
             <SelectItem value="users">Users</SelectItem>
             <SelectItem value="products">Products</SelectItem>
+            <SelectItem value="devices">Devices</SelectItem>
           </SelectContent>
         </Select>
         <Button onClick={handleSummarize} disabled={isSummarizing || isLoading} className="w-full md:w-auto md:justify-self-end bg-accent hover:bg-accent/90">

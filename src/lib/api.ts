@@ -1,15 +1,19 @@
-import { users, products, storageFiles, User, Product, StorageFile } from './data';
+import { users, products, storageFiles, devices, User, Product, StorageFile, Device } from './data';
 
 const LATENCY = 1000;
 
-export async function getCollection(collectionName: 'users' | 'products'): Promise<(User | Product)[]> {
+type CollectionData = User | Product | Omit<Device, 'otaSessions' | 'slotHistory'>;
+
+export async function getCollection(collectionName: 'users' | 'products' | 'devices'): Promise<CollectionData[]> {
   console.log(`Fetching collection: ${collectionName}`);
   return new Promise(resolve => {
     setTimeout(() => {
       if (collectionName === 'users') {
         resolve(JSON.parse(JSON.stringify(users)));
-      } else {
+      } else if (collectionName === 'products') {
         resolve(JSON.parse(JSON.stringify(products)));
+      } else {
+        resolve(JSON.parse(JSON.stringify(devices)));
       }
     }, LATENCY);
   });
@@ -19,7 +23,8 @@ export async function getStorageFiles(): Promise<StorageFile[]> {
     console.log('Fetching storage files');
     return new Promise(resolve => {
         setTimeout(() => {
-            resolve(JSON.parse(JSON.stringify(storageFiles)));
+            const parsedFiles = JSON.parse(JSON.stringify(storageFiles));
+            resolve(parsedFiles);
         }, LATENCY);
     });
 }
