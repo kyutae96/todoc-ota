@@ -18,22 +18,23 @@ export function DashboardNav() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={item.href}>
-            <SidebarMenuButton
-              className={cn(
-                'group-data-[collapsible=icon]:justify-center',
-                'group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10'
-              )}
-              isActive={pathname.startsWith(item.href)}
-              tooltip={{
-                children: item.label,
-                className: 'group-data-[collapsible=icon]:hidden',
-              }}
-            >
+          <SidebarMenuButton
+            asChild
+            className={cn(
+              'group-data-[collapsible=icon]:justify-center',
+              'group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10'
+            )}
+            isActive={pathname.startsWith(item.href)}
+            tooltip={{
+              children: item.label,
+              className: 'group-data-[collapsible=icon]:hidden',
+            }}
+          >
+            <Link href={item.href}>
               <item.icon className="size-5 shrink-0" />
               <span className="min-w-max">{item.label}</span>
-            </SidebarMenuButton>
-          </Link>
+            </Link>
+          </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
