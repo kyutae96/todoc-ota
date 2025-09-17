@@ -19,8 +19,7 @@ export function DashboardNav() {
       {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
           <SidebarMenuButton
-            as={Link}
-            href={item.href}
+            asChild
             className={cn(
               'group-data-[collapsible=icon]:justify-center',
               'group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10'
@@ -31,8 +30,10 @@ export function DashboardNav() {
               className: 'group-data-[collapsible=icon]:hidden',
             }}
           >
-            <item.icon className="size-5 shrink-0" />
-            <span className="min-w-max">{item.label}</span>
+            <Link href={item.href}>
+              <item.icon className="size-5 shrink-0" />
+              <span className="min-w-max">{item.label}</span>
+            </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
