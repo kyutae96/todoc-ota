@@ -76,7 +76,9 @@ export async function getCollection(collectionName: 'users' | 'products' | 'devi
   try {
     const q = query(collection(db, collectionName));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log(`Fetched data for ${collectionName}:`, data);
+    return data;
   } catch (error) {
     console.error(`Error fetching collection ${collectionName}:`, error);
     return [];
