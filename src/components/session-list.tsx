@@ -24,7 +24,7 @@ const PAGE_SIZE = 10;
 function StatusIcon({ status }: { status: OtaSession['status'] }) {
     if (status === 'completed') return <CheckCircle className="size-4 text-green-500" />;
     if (status === 'failed') return <XCircle className="size-4 text-red-500" />;
-    if (status === 'in-progress') return <AlertCircle className="size-4 text-yellow-500" />;
+    if (status === 'in-progress' || status === 'running') return <AlertCircle className="size-4 text-yellow-500" />;
     return null;
 }
 
@@ -217,3 +217,5 @@ export function SessionList() {
     </div>
   );
 }
+
+    

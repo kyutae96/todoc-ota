@@ -34,7 +34,7 @@ export type OtaSession = {
   userId: string;
   startedAt: Date;
   endedAt: Date | null;
-  status: 'completed' | 'failed' | 'in-progress';
+  status: 'completed' | 'failed' | 'in-progress' | 'running';
   slotSelected: 'A' | 'B';
   sourcePath: string;
   files: string[];
@@ -50,7 +50,7 @@ export type OtaSession = {
 
 export type OtaEvent = {
     id: string;
-    type: 'download' | 'update' | 'reboot' | 'error';
+    type: 'download' | 'update' | 'reboot' | 'error' | 'sessionStart';
     at: Date;
     slot: 'A' | 'B';
     fileId?: string;
@@ -118,6 +118,7 @@ export const storageFiles: StorageFile[] = [
 
 const otaEvents: Record<string, OtaEvent[]> = {
   'ota-session-001': [
+    { id: 'evt-001-0', type: 'sessionStart', at: createDate(1, 2, 30), slot: 'B', message: 'OTA start' },
     { id: 'evt-001-1', type: 'download', at: createDate(1, 2, 29), slot: 'B', fileId: 'v2.1.0.bin', percent: 0, processedChunks: 0, totalChunks: 2560, message: 'Download started for v2.1.0.bin' },
     { id: 'evt-001-2', type: 'download', at: createDate(1, 2, 25), slot: 'B', fileId: 'v2.1.0.bin', percent: 50, processedChunks: 1280, totalChunks: 2560, message: 'Download 50% complete' },
     { id: 'evt-001-3', type: 'download', at: createDate(1, 2, 20), slot: 'B', fileId: 'v2.1.0.bin', percent: 100, processedChunks: 2560, totalChunks: 2560, message: 'Download finished' },
@@ -127,11 +128,13 @@ const otaEvents: Record<string, OtaEvent[]> = {
     { id: 'evt-001-7', type: 'update', at: createDate(1, 2, 12), slot: 'B', message: 'Update successful, switching to slot B' },
   ],
   'ota-session-002': [
+    { id: 'evt-002-0', type: 'sessionStart', at: createDate(2, 5, 0), slot: 'A', message: 'OTA start' },
     { id: 'evt-002-1', type: 'download', at: createDate(2, 4, 59), slot: 'A', fileId: 'v1.5.2.bin', percent: 0, message: 'Download started for v1.5.2.bin' },
     { id: 'evt-002-2', type: 'download', at: createDate(2, 4, 55), slot: 'A', fileId: 'v1.5.2.bin', percent: 75, message: 'Download 75% complete' },
     { id: 'evt-002-3', type: 'error', at: createDate(2, 4, 50), slot: 'A', message: 'Network connection lost during download' },
   ],
   'ota-session-003': [
+    { id: 'evt-003-0', type: 'sessionStart', at: createDate(0, 1, 0), slot: 'A', message: 'OTA start' },
     { id: 'evt-003-1', type: 'download', at: createDate(0, 0, 59), slot: 'A', fileId: 'v2.2.0.bin', percent: 0, processedChunks: 0, totalChunks: 3072, message: 'Download started for v2.2.0.bin' },
     { id: 'evt-003-2', type: 'download', at: createDate(0, 0, 45), slot: 'A', fileId: 'v2.2.0.bin', percent: 25, processedChunks: 768, totalChunks: 3072, message: 'Download 25% complete' },
     { id: 'evt-003-3', type: 'download', at: createDate(0, 0, 30), slot: 'A', fileId: 'v2.2.0.bin', percent: 50, processedChunks: 1536, totalChunks: 3072, message: 'Download 50% complete' },
@@ -183,7 +186,7 @@ export const otaSessions: OtaSession[] = [
       userId: 'user-003',
       startedAt: createDate(0, 1, 0),
       endedAt: createDate(0, 0, 30),
-      status: 'in-progress',
+      status: 'running',
       slotSelected: 'A',
       sourcePath: '/firmware/v2.2.0.bin',
       files: ['v2.2.0.bin'],
@@ -209,3 +212,5 @@ export const devices: Device[] = [
         id: 'device-003',
     },
 ];
+
+    

@@ -5,14 +5,14 @@ import { OtaEvent, OtaSession } from '@/lib/data';
 import { useEffect, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { CheckCircle, Download, Power, AlertTriangle, XCircle, FileText, Server, Sliders, Hash, Calendar, Clock, GitBranch } from 'lucide-react';
+import { CheckCircle, Download, Power, AlertTriangle, XCircle, FileText, Server, Sliders, Hash, Calendar, Clock, GitBranch, Play } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { Progress } from './ui/progress';
 
 function StatusIcon({ status }: { status: OtaSession['status'] }) {
     if (status === 'completed') return <CheckCircle className="size-5 text-green-500" />;
     if (status === 'failed') return <XCircle className="size-5 text-red-500" />;
-    if (status === 'in-progress') return <AlertTriangle className="size-5 text-yellow-500" />;
+    if (status === 'in-progress' || status === 'running') return <AlertTriangle className="size-5 text-yellow-500" />;
     return null;
 }
 
@@ -21,6 +21,7 @@ function EventIcon({ type }: { type: OtaEvent['type'] }) {
     if (type === 'update') return <Sliders className="size-4" />;
     if (type === 'reboot') return <Power className="size-4" />;
     if (type === 'error') return <XCircle className="size-4 text-red-500" />;
+    if (type === 'sessionStart') return <Play className="size-4" />;
     return null;
 }
 
@@ -93,7 +94,7 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
             </CardContent>
         </Card>
 
-        {session.status === 'in-progress' && downloadEvent && (
+        {(session.status === 'in-progress' || session.status === 'running') && downloadEvent && (
             <Card>
                 <CardHeader>
                     <CardTitle>Download Progress</CardTitle>
@@ -177,3 +178,5 @@ function SessionDetailsSkeleton() {
         </div>
     )
 }
+
+    
