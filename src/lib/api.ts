@@ -1,4 +1,5 @@
 
+
 import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup } from 'firebase/firestore';
 import { ref, listAll, getMetadata, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
@@ -24,7 +25,14 @@ const getMockOtaSessions = (): Promise<OtaSession[]> => {
     console.log('Fetching MOCK ota sessions');
     return new Promise(resolve => {
         setTimeout(() => {
-            resolve(otaSessions);
+            // Sort devices by ID to mimic the new logic
+            const sortedDevices = [...devices].sort((a, b) => a.id.localeCompare(b.id));
+            const allSessions: OtaSession[] = [];
+            sortedDevices.forEach(device => {
+                const deviceSessions = otaSessions.filter(s => s.deviceId === device.id);
+                allSessions.push(...deviceSessions);
+            });
+            resolve(allSessions);
         }, LATENCY/2);
     });
 }
@@ -42,22 +50,8 @@ const getMockStorageFiles = (): Promise<StorageFile[]> => {
     console.log('Fetching MOCK storage files from /OTA');
     return new Promise(resolve => {
         setTimeout(() => {
-            // Filter files to simulate being in the OTA directory
-            const otaPath = 'OTA';
-            const otaFiles = storageFiles
-              .filter(f => f.path.startsWith(`/${otaPath}`) || f.name === otaPath || f.path === '/')
-              .map(f => {
-                  if (f.type === 'folder' && f.name !== otaPath) {
-                      return { ...f, path: f.path.replace(`/${otaPath}`, '') || '/' };
-                  }
-                  if (f.type === 'file') {
-                      return { ...f, path: f.path.replace(`/${otaPath}`, '') || '/' };
-                  }
-                  return f;
-              })
-              .filter(f => f.name !== 'reports' && f.name !== 'internal' && f.name !== 'Q4_Report.pdf' && f.name !== 'Onboarding.docx'); // a bit brittle
-
-            resolve(storageFiles);
+            const otaFiles = storageFiles.filter(file => file.path.startsWith('/OTA') || file.path === '/');
+            resolve(otaFiles);
         }, LATENCY/3);
     });
 }
