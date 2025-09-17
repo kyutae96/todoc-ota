@@ -17,7 +17,6 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 function getTitleFromPath(path: string): string {
-  if (path.includes('/firestore')) return 'Firestore Explorer';
   if (path.includes('/storage')) return 'Storage Browser';
   if (path.startsWith('/dashboard/sessions/')) return 'Session Details';
   if (path.includes('/sessions')) return 'OTA Sessions';

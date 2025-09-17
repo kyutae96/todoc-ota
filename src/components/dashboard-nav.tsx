@@ -8,7 +8,6 @@ import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/dashboard/firestore', label: 'Firestore', icon: Database },
   { href: '/dashboard/storage', label: 'Storage', icon: FolderKanban },
   { href: '/dashboard/sessions', label: 'OTA Sessions', icon: History },
 ];
