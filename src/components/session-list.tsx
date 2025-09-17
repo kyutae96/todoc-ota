@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { getOtaSessions } from '@/lib/api';
 import { type OtaSession } from '@/lib/data';
-import { ArrowUpDown, Search, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowUpDown, Search, CheckCircle, XCircle, AlertCircle, Play } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from './ui/card';
@@ -43,11 +43,15 @@ export function SessionList() {
       setSessions([]);
       setCurrentPage(1);
       const fetchedSessions = await getOtaSessions();
-      setSessions(fetchedSessions.map(s => ({
-        ...s,
-        startedAt: new Date(s.startedAt),
-        endedAt: s.endedAt ? new Date(s.endedAt) : s.endedAt
-      })));
+      setSessions(fetchedSessions.map(s => {
+        const startedAt = s.startedAt as any;
+        const endedAt = s.endedAt as any;
+        return {
+          ...s,
+          startedAt: startedAt?.toDate ? startedAt.toDate() : new Date(startedAt),
+          endedAt: endedAt?.toDate ? endedAt.toDate() : (endedAt ? new Date(endedAt) : null)
+        }
+      }));
     });
   }, []);
 
@@ -72,7 +76,8 @@ export function SessionList() {
     }
 
     if (sortBy) {
-        filtered.sort((a, b) => {
+        const copy = [...filtered];
+        copy.sort((a, b) => {
             const aValue = a[sortBy as keyof typeof a];
             const bValue = b[sortBy as keyof typeof b];
 
@@ -89,6 +94,7 @@ export function SessionList() {
             if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
             return 0;
         });
+        return copy;
     }
 
     return filtered;
@@ -114,7 +120,7 @@ export function SessionList() {
         <Badge variant={
             value === 'completed' ? 'default' : 
             value === 'failed' ? 'destructive' : 'secondary'
-        } className={value === 'completed' ? 'bg-green-100 text-green-800' : ''}>
+        } className={value === 'completed' ? 'bg-green-100 text-green-800' : value === 'running' || value === 'in-progress' ? 'bg-yellow-100 text-yellow-800' : ''}>
             <StatusIcon status={value as OtaSession['status']} />
             <span className='ml-2'>{value}</span>
         </Badge>
@@ -216,6 +222,3 @@ export function SessionList() {
       </div>
     </div>
   );
-}
-
-    
