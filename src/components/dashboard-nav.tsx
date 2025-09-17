@@ -40,5 +40,3 @@ export function DashboardNav() {
     </SidebarMenu>
   );
 }
-
-    
