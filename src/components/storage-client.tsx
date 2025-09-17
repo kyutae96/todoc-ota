@@ -47,7 +47,6 @@ export function StorageClient() {
   const fetchData = () => {
     startDataTransition(async () => {
       const fetchedFiles = await getStorageFiles();
-      // Dates are stringified in the API, so we need to convert them back to Date objects
       const processedFiles = fetchedFiles.map(file => ({
         ...file,
         createdAt: new Date(file.createdAt),
@@ -76,7 +75,7 @@ export function StorageClient() {
         return;
     }
     try {
-        await uploadFileToStorage({ name: file.name, size: file.size }, data.path);
+        await uploadFileToStorage(file, data.path);
         toast({
             title: "Upload Successful",
             description: `File "${file.name}" has been uploaded.`,

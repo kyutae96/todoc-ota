@@ -62,7 +62,13 @@ export function FirestoreClient() {
       setData([]);
       setCurrentPage(1);
       const fetchedData = await getCollection(collection);
-      setData(fetchedData as DataItem[]);
+      setData(fetchedData.map(item => {
+        const newItem: any = {...item};
+        // Convert ISO strings back to Date objects
+        if (newItem.lastLogin) newItem.lastLogin = new Date(newItem.lastLogin);
+        if (newItem.createdAt) newItem.createdAt = new Date(newItem.createdAt);
+        return newItem;
+      }) as DataItem[]);
     });
   }, [collection]);
   
@@ -115,13 +121,7 @@ export function FirestoreClient() {
     const value = item[field as keyof typeof item];
 
     if (value instanceof Date) {
-      return value.toLocaleDateString();
-    }
-    if (field === 'lastLogin' && 'lastLogin' in item) {
-        return new Date(item.lastLogin).toLocaleString();
-    }
-    if (field === 'createdAt' && 'createdAt' in item) {
-        return new Date(item.createdAt).toLocaleDateString();
+      return value.toLocaleString();
     }
     if (field === 'price') {
       return `$${Number(value).toFixed(2)}`;
