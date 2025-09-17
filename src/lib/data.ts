@@ -109,7 +109,7 @@ export const storageFiles: StorageFile[] = [
     { id: 'file_6', name: 'Onboarding.docx', path: '/internal', size: 1048576, type: 'file', createdAt: createDate(2), updatedAt: new Date(createDate(1)) },
 ];
 
-const otaSessions: OtaSession[] = [
+export const otaSessions: OtaSession[] = [
     {
       id: 'ota-session-001',
       deviceId: 'device-001',
@@ -146,10 +146,40 @@ const otaSessions: OtaSession[] = [
       appVersion: '1.5.2',
       deviceName: 'device-002'
     },
+     {
+      id: 'ota-session-003',
+      deviceId: 'device-001',
+      userId: 'user-003',
+      startedAt: createDate(0, 1, 0),
+      endedAt: createDate(0, 0, 30),
+      status: 'in-progress',
+      slotSelected: 'A',
+      sourcePath: '/firmware/v2.2.0.bin',
+      files: ['v2.2.0.bin'],
+      fileSize: 12582912,
+      chunkSize: 4096,
+      preSlot: 'B',
+      currentSlotAfter: 'B',
+      errorCode: null,
+      appVersion: '2.2.0',
+      deviceName: 'device-001'
+    }
 ];
 
-export const devices: Omit<Device, 'otaSessions' | 'slotHistory'>[] = [
-    { id: 'device-001' },
-    { id: 'device-002' },
-    { id: 'device-003' },
+export const devices: Device[] = [
+    { 
+        id: 'device-001',
+        otaSessions: [otaSessions[0], otaSessions[2]],
+        slotHistory: [],
+    },
+    { 
+        id: 'device-002',
+        otaSessions: [otaSessions[1]],
+        slotHistory: [],
+    },
+    { 
+        id: 'device-003',
+        otaSessions: [],
+        slotHistory: [],
+    },
 ];

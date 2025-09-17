@@ -2,13 +2,14 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Database, FolderKanban } from 'lucide-react';
+import { Database, FolderKanban, History } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard/firestore', label: 'Firestore', icon: Database },
   { href: '/dashboard/storage', label: 'Storage', icon: FolderKanban },
+  { href: '/dashboard/sessions', label: 'OTA Sessions', icon: History },
 ];
 
 export function DashboardNav() {
@@ -18,7 +19,7 @@ export function DashboardNav() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={item.href} passHref>
+          <Link href={item.href} legacyBehavior passHref>
             <SidebarMenuButton
               as="a"
               className={cn(

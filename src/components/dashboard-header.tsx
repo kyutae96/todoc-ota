@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 function getTitleFromPath(path: string): string {
   if (path.includes('/firestore')) return 'Firestore Explorer';
   if (path.includes('/storage')) return 'Storage Browser';
+  if (path.includes('/sessions')) return 'OTA Sessions';
   return 'Dashboard';
 }
 

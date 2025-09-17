@@ -1,4 +1,4 @@
-import { users, products, storageFiles, devices, User, Product, StorageFile, Device } from './data';
+import { users, products, storageFiles, devices, User, Product, StorageFile, Device, otaSessions, OtaSession } from './data';
 
 const LATENCY = 1000;
 
@@ -13,10 +13,19 @@ export async function getCollection(collectionName: 'users' | 'products' | 'devi
       } else if (collectionName === 'products') {
         resolve(JSON.parse(JSON.stringify(products)));
       } else {
-        resolve(JSON.parse(JSON.stringify(devices)));
+        resolve(JSON.parse(JSON.stringify(devices.map(d => ({id: d.id})))));
       }
     }, LATENCY);
   });
+}
+
+export async function getOtaSessions(): Promise<OtaSession[]> {
+    console.log('Fetching all ota sessions');
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(JSON.parse(JSON.stringify(otaSessions)));
+        }, LATENCY);
+    });
 }
 
 export async function getStorageFiles(): Promise<StorageFile[]> {
