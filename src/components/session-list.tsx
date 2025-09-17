@@ -28,7 +28,7 @@ function StatusIcon({ status }: { status: OtaSession['status'] }) {
     return null;
 }
 
-export function SessionList() {
+export function SessionList({ deviceId }: { deviceId?: string }) {
   const [sessions, setSessions] = useState<OtaSession[]>([]);
   const [isLoading, startDataTransition] = useTransition();
   const router = useRouter();
@@ -67,8 +67,12 @@ export function SessionList() {
   const filteredData = useMemo(() => {
     let filtered = sessions;
 
+    if (deviceId) {
+        filtered = filtered.filter(session => session.deviceName === deviceId);
+    }
+
     if (filter) {
-      filtered = sessions.filter((session) =>
+      filtered = filtered.filter((session) =>
         Object.values(session).some((value) =>
           String(value).toLowerCase().includes(filter.toLowerCase())
         )
@@ -98,7 +102,7 @@ export function SessionList() {
     }
 
     return filtered;
-  }, [sessions, filter, sortBy, sortOrder]);
+  }, [sessions, deviceId, filter, sortBy, sortOrder]);
 
 
   const paginatedData = useMemo(() => {
@@ -134,8 +138,8 @@ export function SessionList() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="relative">
+       <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input 
             placeholder="Filter sessions..." 
@@ -147,6 +151,13 @@ export function SessionList() {
             }}
           />
         </div>
+        {deviceId && (
+            <div className='flex items-center gap-2'>
+                <span className='text-sm text-muted-foreground'>Filtered by device:</span>
+                <Badge variant="outline">{deviceId}</Badge>
+                <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/sessions')}>Clear</Button>
+            </div>
+        )}
       </div>
 
       <Card>

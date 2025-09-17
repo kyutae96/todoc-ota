@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -22,6 +23,7 @@ const PAGE_SIZE = 10;
 export function DeviceList() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, startDataTransition] = useTransition();
+  const router = useRouter();
 
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<keyof Device | null>('id');
@@ -125,7 +127,7 @@ export function DeviceList() {
                     ))
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id} className="cursor-pointer">
+                    <TableRow key={item.id} onClick={() => router.push(`/dashboard/sessions?deviceId=${item.id}`)} className="cursor-pointer">
                       {fields.map((field) => (
                         <TableCell key={String(field)}>
                           {item[field]}
