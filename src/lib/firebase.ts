@@ -28,4 +28,6 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
+console.log("Initialized Firestore DB Object:", db);
+
 export { app, db, storage, auth };
