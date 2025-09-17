@@ -6,24 +6,16 @@ import { OtaSession, Device } from './data';
 
 export async function getDevices(): Promise<Device[]> {
     try {
-        // Query the 'otaSessions' collection group to get all sessions.
-        const sessionsQuery = query(collectionGroup(db, 'otaSessions'));
-        const sessionsSnapshot = await getDocs(sessionsQuery);
-        
-        // Use a Set to store unique device names from the sessions.
+        const sessionsQuery = collectionGroup(db, 'otaSessions');
+        const querySnapshot = await getDocs(sessionsQuery);
         const deviceNames = new Set<string>();
-        sessionsSnapshot.forEach(doc => {
+        querySnapshot.forEach((doc) => {
             const data = doc.data();
             if (data.deviceName) {
                 deviceNames.add(data.deviceName);
             }
         });
-
-        // Convert the Set of device names into the Device[] format.
-        const devices = Array.from(deviceNames).map(name => ({
-            id: name
-        }));
-
+        const devices = Array.from(deviceNames).map(id => ({ id }));
         return devices.sort((a,b) => a.id.localeCompare(b.id));
     } catch (error) {
         console.error("Error fetching devices from sessions:", error);
@@ -33,25 +25,19 @@ export async function getDevices(): Promise<Device[]> {
 
 export async function getOtaSessions(): Promise<OtaSession[]> {
     try {
-        const deviceDocs = await getDocs(collection(db, 'devices'));
-        const sortedDevices = deviceDocs.docs.sort((a,b) => a.id.localeCompare(b.id));
+        const sessionsQuery = query(collectionGroup(db, 'otaSessions'));
+        const sessionsSnapshot = await getDocs(sessionsQuery);
+        
+        const allSessions = sessionsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                startedAt: data.startedAt?.toDate(),
+                endedAt: data.endedAt?.toDate(),
+            } as OtaSession;
+        });
 
-        const allSessions: OtaSession[] = [];
-
-        for (const deviceDoc of sortedDevices) {
-            const sessionsQuery = query(collection(db, 'devices', deviceDoc.id, 'otaSessions'));
-            const sessionsSnapshot = await getDocs(sessionsQuery);
-            const sessions = sessionsSnapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    ...data,
-                    startedAt: data.startedAt?.toDate(),
-                    endedAt: data.endedAt?.toDate(),
-                } as OtaSession
-            });
-            allSessions.push(...sessions);
-        }
         return allSessions;
     } catch (error) {
         console.error("Error fetching OTA sessions:", error);
@@ -62,13 +48,41 @@ export async function getOtaSessions(): Promise<OtaSession[]> {
 export async function getOtaSession(sessionId: string): Promise<OtaSession | undefined> {
     try {
         // We need to find which device this session belongs to.
-        // A collectionGroup query is the most efficient way.
-        const sessionsQuery = query(collectionGroup(db, 'otaSessions'), where('__name__', '==', sessionId), limit(1));
-        const snapshot = await getDocs(sessionsQuery);
+        // A collectionGroup query is the most efficient way to find the session document
+        // without knowing its full path.
+        const sessionQuery = query(collectionGroup(db, 'otaSessions'), where('__name__', '==', `devices/${sessionId.split('/')[0]}/otaSessions/${sessionId.split('/')[2]}`), limit(1));
+        const snapshot = await getDocs(sessionQuery);
+
 
         if (snapshot.empty) {
-            console.log(`No OTA session found with ID: ${sessionId}`);
-            return undefined;
+             // Fallback for direct ID match if the above path-based query fails.
+            const fallbackQuery = query(collectionGroup(db, 'otaSessions'), where('__name__', '==', sessionId));
+            const fallbackSnapshot = await getDocs(fallbackQuery);
+            if(fallbackSnapshot.empty) {
+                console.log(`No OTA session found with ID: ${sessionId}`);
+                return undefined;
+            }
+            const sessionDoc = fallbackSnapshot.docs[0];
+            const sessionData = sessionDoc.data();
+            const eventsQuery = query(collection(sessionDoc.ref, 'events'), orderBy('at', 'desc'));
+            const eventsSnapshot = await getDocs(eventsQuery);
+
+            const events = eventsSnapshot.docs.map(eventDoc => {
+                const eventData = eventDoc.data();
+                return {
+                    id: eventDoc.id,
+                    ...eventData,
+                    at: eventData.at?.toDate(),
+                }
+            });
+
+            return {
+                id: sessionDoc.id,
+                ...sessionData,
+                startedAt: sessionData.startedAt?.toDate(),
+                endedAt: sessionData.endedAt?.toDate(),
+                events: events,
+            } as OtaSession;
         }
 
         const sessionDoc = snapshot.docs[0];

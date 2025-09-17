@@ -187,7 +187,7 @@ export function SessionList({ deviceId }: { deviceId?: string }) {
                     ))
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id} onClick={() => router.push(`/dashboard/sessions/${item.id}`)} className="cursor-pointer">
+                    <TableRow key={item.id} onClick={() => router.push(`/dashboard/sessions/${item.deviceName}/${item.id}`)} className="cursor-pointer">
                       {fields.map((field) => (
                         <TableCell key={String(field)}>
                           {formatCell(item, field)}
