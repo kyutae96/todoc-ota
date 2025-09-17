@@ -2,114 +2,67 @@
 import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup } from 'firebase/firestore';
 import { ref, listAll, getMetadata, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
-import { users, products, storageFiles, devices, User, Product, StorageFile, OtaSession } from './data';
+import { users, products, storageFiles, devices, User, Product, StorageFile, OtaSession, otaSessions } from './data';
 
 const LATENCY = 1000;
 
 type CollectionData = User | Product;
 
-export async function getCollection(collectionName: 'users' | 'products' | 'devices'): Promise<any[]> {
-  console.log(`Fetching collection: ${collectionName}`);
-  const collRef = collection(db, collectionName);
-  const q = query(collRef);
-  const querySnapshot = await getDocs(q);
-  const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+// Mock data functions
+const getMockCollection = (collectionName: 'users' | 'products' | 'devices'): Promise<any[]> => {
+    console.log(`Fetching MOCK collection: ${collectionName}`);
+    return new Promise(resolve => {
+        setTimeout(() => {
+            if (collectionName === 'users') resolve(users);
+            if (collectionName === 'products') resolve(products);
+            if (collectionName === 'devices') resolve(devices.map(d => ({...d, name: d.id, status: 'online', lastSeen: new Date()})));
+        }, LATENCY/4);
+    });
+}
 
-  // Firestore timestamps need to be converted to JS Dates.
-  return data.map(item => {
-    const newItem: any = { ...item };
-    for (const key in newItem) {
-      if (newItem[key]?.toDate) {
-        newItem[key] = newItem[key].toDate().toISOString();
-      }
-    }
-    return newItem;
-  });
+const getMockOtaSessions = (): Promise<OtaSession[]> => {
+    console.log('Fetching MOCK ota sessions');
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(otaSessions);
+        }, LATENCY/2);
+    });
+}
+
+const getMockOtaSession = (sessionId: string): Promise<OtaSession | undefined> => {
+    console.log(`Fetching MOCK ota session: ${sessionId}`);
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(otaSessions.find(s => s.id === sessionId));
+        }, LATENCY/2);
+    });
+}
+
+const getMockStorageFiles = (): Promise<StorageFile[]> => {
+    console.log('Fetching MOCK storage files');
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(storageFiles);
+        }, LATENCY/3);
+    });
+}
+
+
+export async function getCollection(collectionName: 'users' | 'products' | 'devices'): Promise<any[]> {
+  return getMockCollection(collectionName);
 }
 
 
 export async function getOtaSessions(): Promise<OtaSession[]> {
-    console.log('Fetching all ota sessions using collectionGroup');
-    const sessionsRef = collectionGroup(db, 'otaSessions');
-    const q = query(sessionsRef, orderBy('startedAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    const sessions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as OtaSession[];
-    
-    return sessions.map(s => ({
-        ...s,
-        startedAt: (s.startedAt as any).toDate(),
-        endedAt: s.endedAt ? (s.endedAt as any).toDate() : s.endedAt
-      }));
+    return getMockOtaSessions();
 }
 
 export async function getOtaSession(sessionId: string): Promise<OtaSession | undefined> {
-    console.log(`Fetching ota session: ${sessionId} using collectionGroup`);
-    const sessionsQuery = query(collectionGroup(db, 'otaSessions'));
-    const sessionsSnapshot = await getDocs(sessionsQuery);
-    
-    let sessionDoc;
-    for (const doc of sessionsSnapshot.docs) {
-        if (doc.id === sessionId) {
-            sessionDoc = doc;
-            break;
-        }
-    }
-
-    if (!sessionDoc || !sessionDoc.exists()) {
-        console.log(`Session ${sessionId} not found`);
-        return undefined;
-    }
-
-    const sessionData = { id: sessionDoc.id, ...sessionDoc.data() } as OtaSession;
-    
-    const eventsRef = collection(sessionDoc.ref, 'events');
-    const eventsQuery = query(eventsRef, orderBy('at', 'desc'));
-    const eventsSnapshot = await getDocs(eventsQuery);
-    const events = eventsSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-
-    return {
-        ...sessionData,
-        startedAt: (sessionData.startedAt as any).toDate(),
-        endedAt: sessionData.endedAt ? (sessionData.endedAt as any).toDate() : sessionData.endedAt,
-        events: events.map((e: any) => ({...e, at: e.at.toDate()}))
-    } as OtaSession;
+    return getMockOtaSession(sessionId);
 }
 
 export async function getStorageFiles(): Promise<StorageFile[]> {
-    console.log('Fetching storage files from OTA/');
-    
-    const listRef = ref(storage, 'OTA/');
-    const res = await listAll(listRef);
-    
-    const files: StorageFile[] = [];
-
-    // Add folders (prefixes)
-    for (const prefixRef of res.prefixes) {
-        files.push({
-            id: prefixRef.fullPath,
-            name: prefixRef.name,
-            path: prefixRef.parent?.fullPath ?? '/',
-            size: 0,
-            type: 'folder',
-            createdAt: new Date(0), // Folders don't have creation time in basic list
-            updatedAt: new Date(0), // or update time
-        });
-    }
-
-    for (const itemRef of res.items) {
-        const metadata = await getMetadata(itemRef);
-        files.push({
-            id: metadata.generation,
-            name: metadata.name,
-            path: metadata.fullPath.substring(0, metadata.fullPath.lastIndexOf('/')),
-            size: metadata.size,
-            type: 'file',
-            createdAt: new Date(metadata.timeCreated),
-            updatedAt: new Date(metadata.updated),
-        });
-    }
-    
-    return files;
+    return getMockStorageFiles();
 }
 
 export async function uploadFileToStorage(file: File, path: string): Promise<StorageFile> {
