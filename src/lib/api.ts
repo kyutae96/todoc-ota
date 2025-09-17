@@ -39,9 +39,24 @@ const getMockOtaSession = (sessionId: string): Promise<OtaSession | undefined> =
 }
 
 const getMockStorageFiles = (): Promise<StorageFile[]> => {
-    console.log('Fetching MOCK storage files');
+    console.log('Fetching MOCK storage files from /OTA');
     return new Promise(resolve => {
         setTimeout(() => {
+            // Filter files to simulate being in the OTA directory
+            const otaPath = 'OTA';
+            const otaFiles = storageFiles
+              .filter(f => f.path.startsWith(`/${otaPath}`) || f.name === otaPath || f.path === '/')
+              .map(f => {
+                  if (f.type === 'folder' && f.name !== otaPath) {
+                      return { ...f, path: f.path.replace(`/${otaPath}`, '') || '/' };
+                  }
+                  if (f.type === 'file') {
+                      return { ...f, path: f.path.replace(`/${otaPath}`, '') || '/' };
+                  }
+                  return f;
+              })
+              .filter(f => f.name !== 'reports' && f.name !== 'internal' && f.name !== 'Q4_Report.pdf' && f.name !== 'Onboarding.docx'); // a bit brittle
+
             resolve(storageFiles);
         }, LATENCY/3);
     });
@@ -69,17 +84,22 @@ export async function uploadFileToStorage(file: File, path: string): Promise<Sto
     const basePath = 'OTA';
     console.log(`Uploading file: ${file.name} to ${basePath}/${path}`);
     const fullPath = path ? `${basePath}/${path}/${file.name}` : `${basePath}/${file.name}`;
-    const storageRef = ref(storage, fullPath);
-    const snapshot = await uploadBytes(storageRef, file);
-    const metadata = await getMetadata(snapshot.ref);
     
-    return {
-        id: metadata.generation,
-        name: metadata.name,
-        path: metadata.fullPath,
-        size: metadata.size,
-        type: 'file',
-        createdAt: new Date(metadata.timeCreated),
-        updatedAt: new Date(metadata.updated),
-    };
+    // This is a mock upload, we're not actually using Firebase storage here
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const newFile: StorageFile = {
+                id: `mock_${new Date().getTime()}`,
+                name: file.name,
+                path: fullPath,
+                size: file.size,
+                type: 'file',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+            // You might want to add the new file to the mock storageFiles array
+            // storageFiles.push(newFile);
+            resolve(newFile);
+        }, LATENCY);
+    });
 }
