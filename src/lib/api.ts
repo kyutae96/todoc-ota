@@ -1,3 +1,4 @@
+
 import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup, where } from 'firebase/firestore';
 import { ref, listAll, getMetadata, uploadBytes } from 'firebase/storage';
 import { db, storage } from './firebase';
@@ -6,7 +7,6 @@ import { OtaSession, Device } from './data';
 export async function getDevices(): Promise<Device[]> {
     try {
         const deviceDocs = await getDocs(collection(db, 'devices'));
-        console.log("Fetched device documents:", deviceDocs.docs);
         const devices = deviceDocs.docs.map(doc => ({
             id: doc.id
         }));
