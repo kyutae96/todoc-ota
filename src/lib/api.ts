@@ -76,36 +76,46 @@ export async function getOtaSession(sessionId: string): Promise<OtaSession | und
 }
 
 export async function getStorageFiles(): Promise<StorageFile[]> {
-    console.log('Fetching storage files');
+    console.log('Fetching storage files from OTA/');
     
-    const listRef = ref(storage);
+    const listRef = ref(storage, 'OTA/');
     const res = await listAll(listRef);
     
     const files: StorageFile[] = [];
+
+    // Add folders (prefixes)
+    for (const prefixRef of res.prefixes) {
+        files.push({
+            id: prefixRef.fullPath,
+            name: prefixRef.name,
+            path: prefixRef.parent?.fullPath ?? '/',
+            size: 0,
+            type: 'folder',
+            createdAt: new Date(0), // Folders don't have creation time in basic list
+            updatedAt: new Date(0), // or update time
+        });
+    }
 
     for (const itemRef of res.items) {
         const metadata = await getMetadata(itemRef);
         files.push({
             id: metadata.generation,
             name: metadata.name,
-            path: metadata.fullPath,
+            path: metadata.fullPath.substring(0, metadata.fullPath.lastIndexOf('/')),
             size: metadata.size,
             type: 'file',
             createdAt: new Date(metadata.timeCreated),
             updatedAt: new Date(metadata.updated),
         });
     }
-
-    // Note: listAll does not directly support folders in the same way.
-    // This implementation will only list files at the root.
-    // For a full folder structure, a more complex recursive approach would be needed.
     
     return files;
 }
 
 export async function uploadFileToStorage(file: File, path: string): Promise<StorageFile> {
-    console.log(`Uploading file: ${file.name} to ${path}`);
-    const fullPath = path ? `${path}/${file.name}` : file.name;
+    const basePath = 'OTA';
+    console.log(`Uploading file: ${file.name} to ${basePath}/${path}`);
+    const fullPath = path ? `${basePath}/${path}/${file.name}` : `${basePath}/${file.name}`;
     const storageRef = ref(storage, fullPath);
     const snapshot = await uploadBytes(storageRef, file);
     const metadata = await getMetadata(snapshot.ref);

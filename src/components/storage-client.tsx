@@ -118,7 +118,7 @@ export function StorageClient() {
                 <DialogHeader>
                   <DialogTitle>Upload File</DialogTitle>
                   <DialogDescription>
-                    Select a file and specify a destination path in Firebase Storage.
+                    Select a file and specify a destination path within the /OTA folder.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -127,8 +127,8 @@ export function StorageClient() {
                     <Input id="file" type="file" {...register("file", { required: true })} />
                   </div>
                   <div className="grid w-full max-w-sm items-center gap-1.5">
-                    <Label htmlFor="path">Path (optional)</Label>
-                    <Input id="path" placeholder="/images/avatars" {...register("path")} />
+                    <Label htmlFor="path">Sub-path (optional)</Label>
+                    <Input id="path" placeholder="e.g. firmware/v1.0" {...register("path")} />
                   </div>
                 </div>
                 <DialogFooter>
@@ -158,7 +158,7 @@ export function StorageClient() {
           ))
         ) : filteredFiles.length > 0 ? (
           filteredFiles
-            .sort((a,b) => (a.type > b.type) ? 1 : ((b.type > a.type) ? -1 : 0)) // folders first
+            .sort((a,b) => (a.type > b.type) ? -1 : ((b.type > a.type) ? 1 : 0)) // folders first
             .map(file => (
             <Card key={file.id} className="flex flex-col justify-between">
               <CardHeader className="flex-row items-center gap-4 space-y-0 pb-2">
@@ -169,7 +169,7 @@ export function StorageClient() {
                 <CardTitle className="font-sans text-base font-medium leading-tight truncate" title={file.name}>{file.name}</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground pb-4">
-                <p>Path: {file.path}</p>
+                <p>Path: /{file.path}</p>
               </CardContent>
               <CardFooter className="text-xs text-muted-foreground pt-2 border-t">
                 {file.type === 'file' ? (
@@ -183,7 +183,7 @@ export function StorageClient() {
           ))
         ) : (
             <div className="col-span-full text-center py-12">
-                <p className="text-muted-foreground">No files or folders found.</p>
+                <p className="text-muted-foreground">No files or folders found in /OTA.</p>
             </div>
         )}
       </div>
