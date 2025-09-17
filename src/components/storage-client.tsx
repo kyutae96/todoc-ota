@@ -47,7 +47,13 @@ export function StorageClient() {
   const fetchData = () => {
     startDataTransition(async () => {
       const fetchedFiles = await getStorageFiles();
-      setFiles(fetchedFiles);
+      // Dates are stringified in the API, so we need to convert them back to Date objects
+      const processedFiles = fetchedFiles.map(file => ({
+        ...file,
+        createdAt: new Date(file.createdAt),
+        updatedAt: new Date(file.updatedAt),
+      }));
+      setFiles(processedFiles);
     });
   }
   
