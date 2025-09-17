@@ -37,13 +37,14 @@ function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType, lab
     )
 }
 
-export function DeviceDetails({ deviceId }: { deviceId: string }) {
+// Renamed to SessionDetails to avoid confusion
+export function SessionDetails({ sessionId }: { sessionId: string }) {
   const [session, setSession] = useState<OtaSession | null>(null);
   const [isLoading, startDataTransition] = useTransition();
 
   useEffect(() => {
     startDataTransition(async () => {
-      const fetchedSession = await getOtaSession(deviceId);
+      const fetchedSession = await getOtaSession(sessionId);
       if (fetchedSession) {
         setSession({
           ...fetchedSession,
@@ -53,10 +54,10 @@ export function DeviceDetails({ deviceId }: { deviceId: string }) {
         });
       }
     });
-  }, [deviceId]);
+  }, [sessionId]);
 
   if (isLoading) {
-    return <DeviceDetailsSkeleton />;
+    return <SessionDetailsSkeleton />;
   }
 
   if (!session) {
@@ -140,7 +141,7 @@ export function DeviceDetails({ deviceId }: { deviceId: string }) {
   );
 }
 
-function DeviceDetailsSkeleton() {
+function SessionDetailsSkeleton() {
     return (
         <div className="space-y-6">
             <Card>
@@ -178,5 +179,3 @@ function DeviceDetailsSkeleton() {
         </div>
     )
 }
-
-    

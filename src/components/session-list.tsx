@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { getOtaSessions } from '@/lib/api';
 import { type OtaSession } from '@/lib/data';
-import { ArrowUpDown, Search, CheckCircle, XCircle, AlertCircle, Play } from 'lucide-react';
+import { ArrowUpDown, Search, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from './ui/card';
@@ -222,3 +222,4 @@ export function SessionList() {
       </div>
     </div>
   );
+}

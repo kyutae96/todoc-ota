@@ -47,9 +47,9 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
       if (fetchedSession) {
         setSession({
           ...fetchedSession,
-          startedAt: new Date(fetchedSession.startedAt),
-          endedAt: fetchedSession.endedAt ? new Date(fetchedSession.endedAt) : fetchedSession.endedAt,
-          events: fetchedSession.events.map(e => ({ ...e, at: new Date(e.at) }))
+          startedAt: fetchedSession.startedAt ? new Date(fetchedSession.startedAt) : new Date(),
+          endedAt: fetchedSession.endedAt ? new Date(fetchedSession.endedAt) : null,
+          events: fetchedSession.events.map(e => ({ ...e, at: e.at ? new Date(e.at) : new Date() }))
         });
       }
     });
@@ -178,5 +178,3 @@ function SessionDetailsSkeleton() {
         </div>
     )
 }
-
-    

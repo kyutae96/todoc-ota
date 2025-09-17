@@ -3,13 +3,14 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FolderKanban, Smartphone } from 'lucide-react';
+import { FolderKanban, Smartphone, History } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard/storage', label: 'Storage', icon: FolderKanban },
   { href: '/dashboard/devices', label: 'Devices', icon: Smartphone },
+  { href: '/dashboard/sessions', label: 'Sessions', icon: History },
 ];
 
 export function DashboardNav() {

@@ -18,8 +18,9 @@ import Link from 'next/link';
 
 function getTitleFromPath(path: string): string {
   if (path.includes('/storage')) return 'Storage Browser';
-  if (path.startsWith('/dashboard/devices/')) return 'Device Details';
-  if (path.includes('/devices')) return 'Devices';
+  if (path.startsWith('/dashboard/devices')) return 'Devices';
+  if (path.startsWith('/dashboard/sessions/')) return 'Session Details';
+  if (path.includes('/sessions')) return 'Sessions';
   return 'Dashboard';
 }
 
@@ -27,15 +28,15 @@ function Breadcrumbs() {
     const pathname = usePathname();
     const title = getTitleFromPath(pathname);
     
-    if (pathname.startsWith('/dashboard/devices/')) {
-        const deviceId = pathname.split('/').pop();
+    if (pathname.startsWith('/dashboard/sessions/')) {
+        const sessionId = pathname.split('/').pop();
         return (
             <div className="flex items-center gap-2">
-                <Link href="/dashboard/devices" className="text-muted-foreground hover:text-foreground">
-                    Devices
+                <Link href="/dashboard/sessions" className="text-muted-foreground hover:text-foreground">
+                    Sessions
                 </Link>
                  <span>/</span>
-                <span className="font-semibold text-foreground">{deviceId}</span>
+                <span className="font-semibold text-foreground">{sessionId}</span>
             </div>
         )
     }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -12,50 +11,33 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { getOtaSessions } from '@/lib/api';
-import { type OtaSession } from '@/lib/data';
-import { ArrowUpDown, Search, CheckCircle, XCircle, AlertCircle, Play } from 'lucide-react';
+import { getDevices } from '@/lib/api';
+import { type Device } from '@/lib/data';
+import { ArrowUpDown, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from './ui/card';
 
 const PAGE_SIZE = 10;
 
-function StatusIcon({ status }: { status: OtaSession['status'] }) {
-    if (status === 'completed') return <CheckCircle className="size-4 text-green-500" />;
-    if (status === 'failed') return <XCircle className="size-4 text-red-500" />;
-    if (status === 'in-progress' || status === 'running') return <AlertCircle className="size-4 text-yellow-500" />;
-    return null;
-}
-
 export function DeviceList() {
-  const [sessions, setSessions] = useState<OtaSession[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, startDataTransition] = useTransition();
-  const router = useRouter();
 
   const [filter, setFilter] = useState('');
-  const [sortBy, setSortBy] = useState<keyof OtaSession | null>('startedAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<keyof Device | null>('id');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     startDataTransition(async () => {
-      setSessions([]);
+      setDevices([]);
       setCurrentPage(1);
-      const fetchedSessions = await getOtaSessions();
-      setSessions(fetchedSessions.map(s => {
-        const startedAt = s.startedAt as any;
-        const endedAt = s.endedAt as any;
-        return {
-          ...s,
-          startedAt: startedAt?.toDate ? startedAt.toDate() : new Date(startedAt),
-          endedAt: endedAt?.toDate ? endedAt.toDate() : (endedAt ? new Date(endedAt) : null)
-        }
-      }));
+      const fetchedDevices = await getDevices();
+      setDevices(fetchedDevices);
     });
   }, []);
 
-  const handleSort = (field: keyof OtaSession) => {
+  const handleSort = (field: keyof Device) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -65,30 +47,19 @@ export function DeviceList() {
   };
 
   const filteredData = useMemo(() => {
-    let filtered = sessions;
+    let filtered = devices;
 
     if (filter) {
-      filtered = sessions.filter((session) =>
-        Object.values(session).some((value) =>
-          String(value).toLowerCase().includes(filter.toLowerCase())
-        )
+      filtered = devices.filter((device) =>
+        device.id.toLowerCase().includes(filter.toLowerCase())
       );
     }
 
     if (sortBy) {
         const copy = [...filtered];
         copy.sort((a, b) => {
-            const aValue = a[sortBy as keyof typeof a];
-            const bValue = b[sortBy as keyof typeof b];
-
-            if (aValue === undefined || aValue === null) return 1;
-            if (bValue === undefined || bValue === null) return -1;
-            
-            if (sortBy === 'startedAt' || sortBy === 'endedAt') {
-                const dateA = new Date(aValue as string | number | Date).getTime();
-                const dateB = new Date(bValue as string | number | Date).getTime();
-                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-            }
+            const aValue = a[sortBy];
+            const bValue = b[sortBy];
 
             if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
             if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
@@ -98,7 +69,7 @@ export function DeviceList() {
     }
 
     return filtered;
-  }, [sessions, filter, sortBy, sortOrder]);
+  }, [devices, filter, sortBy, sortOrder]);
 
 
   const paginatedData = useMemo(() => {
@@ -108,29 +79,7 @@ export function DeviceList() {
 
   const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
 
-  const formatCell = (item: OtaSession, field: keyof OtaSession) => {
-    const value = item[field as keyof typeof item];
-
-    if (field === 'startedAt' || field === 'endedAt') {
-        return value ? new Date(value as string | number | Date).toLocaleString() : 'N/A';
-    }
-    
-    if (field === 'status') {
-      return (
-        <Badge variant={
-            value === 'completed' ? 'default' : 
-            value === 'failed' ? 'destructive' : 'secondary'
-        } className={value === 'completed' ? 'bg-green-100 text-green-800' : value === 'running' || value === 'in-progress' ? 'bg-yellow-100 text-yellow-800' : ''}>
-            <StatusIcon status={value as OtaSession['status']} />
-            <span className='ml-2'>{value}</span>
-        </Badge>
-      )
-    }
-
-    return String(value);
-  };
-
-  const fields: (keyof OtaSession)[] = ['deviceName', 'status', 'appVersion', 'startedAt', 'endedAt', 'errorCode'];
+  const fields: (keyof Device)[] = ['id'];
 
   return (
     <div className="space-y-6">
@@ -158,7 +107,7 @@ export function DeviceList() {
                   {fields.map((field) => (
                     <TableHead key={String(field)}>
                       <Button variant="ghost" onClick={() => handleSort(field)} className="-ml-4">
-                        {String(field).replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        Device ID
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </Button>
                     </TableHead>
@@ -176,10 +125,10 @@ export function DeviceList() {
                     ))
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id} onClick={() => router.push(`/dashboard/devices/${item.id}`)} className="cursor-pointer">
+                    <TableRow key={item.id} className="cursor-pointer">
                       {fields.map((field) => (
                         <TableCell key={String(field)}>
-                          {formatCell(item, field)}
+                          {item[field]}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -222,3 +171,4 @@ export function DeviceList() {
       </div>
     </div>
   );
+}
