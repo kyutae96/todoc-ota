@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useTransition } from 'react';
@@ -38,7 +39,7 @@ type DataItem = User | Product | Omit<Device, 'otaSessions' | 'slotHistory'> & {
 const collectionFields: Record<CollectionName, (keyof DataItem)[]> = {
   users: ['id', 'name', 'email', 'role', 'status', 'lastLogin'],
   products: ['id', 'name', 'category', 'price', 'stock', 'createdAt'],
-  devices: ['id', 'name', 'status', 'lastSeen'],
+  devices: ['id'],
 };
 
 const PAGE_SIZE = 5;
@@ -64,10 +65,10 @@ export function FirestoreClient() {
       const fetchedData = await getCollection(collection);
       setData(fetchedData.map(item => {
         const newItem: any = {...item};
-        // Convert ISO strings back to Date objects
-        if (newItem.lastLogin) newItem.lastLogin = new Date(newItem.lastLogin);
-        if (newItem.createdAt) newItem.createdAt = new Date(newItem.createdAt);
-        if (newItem.lastSeen) newItem.lastSeen = new Date(newItem.lastSeen);
+        // Convert Timestamp objects to Date objects
+        if (newItem.lastLogin?.toDate) newItem.lastLogin = newItem.lastLogin.toDate();
+        if (newItem.createdAt?.toDate) newItem.createdAt = newItem.createdAt.toDate();
+        if (newItem.lastSeen?.toDate) newItem.lastSeen = newItem.lastSeen.toDate();
         return newItem;
       }) as DataItem[]);
     });
