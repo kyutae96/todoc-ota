@@ -44,6 +44,7 @@ export type OtaSession = {
   errorCode: number | null;
   appVersion: string;
   deviceName: string;
+  events: OtaEvent[];
 }
 
 export type OtaEvent = {
@@ -109,6 +110,28 @@ export const storageFiles: StorageFile[] = [
     { id: 'file_6', name: 'Onboarding.docx', path: '/internal', size: 1048576, type: 'file', createdAt: createDate(2), updatedAt: new Date(createDate(1)) },
 ];
 
+const otaEvents: Record<string, OtaEvent[]> = {
+  'ota-session-001': [
+    { id: 'evt-001-1', type: 'download', at: createDate(1, 2, 29), slot: 'B', fileId: 'v2.1.0.bin', percent: 0, processedChunks: 0, totalChunks: 2560, message: 'Download started for v2.1.0.bin' },
+    { id: 'evt-001-2', type: 'download', at: createDate(1, 2, 25), slot: 'B', fileId: 'v2.1.0.bin', percent: 50, processedChunks: 1280, totalChunks: 2560, message: 'Download 50% complete' },
+    { id: 'evt-001-3', type: 'download', at: createDate(1, 2, 20), slot: 'B', fileId: 'v2.1.0.bin', percent: 100, processedChunks: 2560, totalChunks: 2560, message: 'Download finished' },
+    { id: 'evt-001-4', type: 'update', at: createDate(1, 2, 19), slot: 'B', message: 'Verification successful' },
+    { id: 'evt-001-5', type: 'update', at: createDate(1, 2, 18), slot: 'B', message: 'Applying update' },
+    { id: 'evt-001-6', type: 'reboot', at: createDate(1, 2, 15), slot: 'B', message: 'Rebooting device to apply update' },
+    { id: 'evt-001-7', type: 'update', at: createDate(1, 2, 12), slot: 'B', message: 'Update successful, switching to slot B' },
+  ],
+  'ota-session-002': [
+    { id: 'evt-002-1', type: 'download', at: createDate(2, 4, 59), slot: 'A', fileId: 'v1.5.2.bin', percent: 0, message: 'Download started for v1.5.2.bin' },
+    { id: 'evt-002-2', type: 'download', at: createDate(2, 4, 55), slot: 'A', fileId: 'v1.5.2.bin', percent: 75, message: 'Download 75% complete' },
+    { id: 'evt-002-3', type: 'error', at: createDate(2, 4, 50), slot: 'A', message: 'Network connection lost during download' },
+  ],
+  'ota-session-003': [
+    { id: 'evt-003-1', type: 'download', at: createDate(0, 0, 59), slot: 'A', fileId: 'v2.2.0.bin', percent: 0, processedChunks: 0, totalChunks: 3072, message: 'Download started for v2.2.0.bin' },
+    { id: 'evt-003-2', type: 'download', at: createDate(0, 0, 45), slot: 'A', fileId: 'v2.2.0.bin', percent: 25, processedChunks: 768, totalChunks: 3072, message: 'Download 25% complete' },
+    { id: 'evt-003-3', type: 'download', at: createDate(0, 0, 30), slot: 'A', fileId: 'v2.2.0.bin', percent: 50, processedChunks: 1536, totalChunks: 3072, message: 'Download 50% complete' },
+  ]
+};
+
 export const otaSessions: OtaSession[] = [
     {
       id: 'ota-session-001',
@@ -126,7 +149,8 @@ export const otaSessions: OtaSession[] = [
       currentSlotAfter: 'B',
       errorCode: null,
       appVersion: '2.1.0',
-      deviceName: 'device-001'
+      deviceName: 'device-001',
+      events: otaEvents['ota-session-001']
     },
     {
       id: 'ota-session-002',
@@ -144,7 +168,8 @@ export const otaSessions: OtaSession[] = [
       currentSlotAfter: 'B',
       errorCode: 504,
       appVersion: '1.5.2',
-      deviceName: 'device-002'
+      deviceName: 'device-002',
+      events: otaEvents['ota-session-002']
     },
      {
       id: 'ota-session-003',
@@ -162,7 +187,8 @@ export const otaSessions: OtaSession[] = [
       currentSlotAfter: 'B',
       errorCode: null,
       appVersion: '2.2.0',
-      deviceName: 'device-001'
+      deviceName: 'device-001',
+      events: otaEvents['ota-session-003']
     }
 ];
 

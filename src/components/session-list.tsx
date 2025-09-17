@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -30,6 +31,7 @@ function StatusIcon({ status }: { status: OtaSession['status'] }) {
 export function SessionList() {
   const [sessions, setSessions] = useState<OtaSession[]>([]);
   const [isLoading, startDataTransition] = useTransition();
+  const router = useRouter();
 
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<keyof OtaSession | null>('startedAt');
@@ -41,7 +43,11 @@ export function SessionList() {
       setSessions([]);
       setCurrentPage(1);
       const fetchedSessions = await getOtaSessions();
-      setSessions(fetchedSessions);
+      setSessions(fetchedSessions.map(s => ({
+        ...s,
+        startedAt: new Date(s.startedAt),
+        endedAt: s.endedAt ? new Date(s.endedAt) : s.endedAt
+      })));
     });
   }, []);
 
@@ -73,7 +79,6 @@ export function SessionList() {
             if (aValue === undefined || aValue === null) return 1;
             if (bValue === undefined || bValue === null) return -1;
             
-            // Special handling for date sorting
             if (sortBy === 'startedAt' || sortBy === 'endedAt') {
                 const dateA = new Date(aValue as string | number | Date).getTime();
                 const dateB = new Date(bValue as string | number | Date).getTime();
@@ -165,7 +170,7 @@ export function SessionList() {
                     ))
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} onClick={() => router.push(`/dashboard/sessions/${item.id}`)} className="cursor-pointer">
                       {fields.map((field) => (
                         <TableCell key={String(field)}>
                           {formatCell(item, field)}

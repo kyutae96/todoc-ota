@@ -13,7 +13,10 @@ export async function getCollection(collectionName: 'users' | 'products' | 'devi
       } else if (collectionName === 'products') {
         resolve(JSON.parse(JSON.stringify(products)));
       } else {
-        resolve(JSON.parse(JSON.stringify(devices.map(d => ({id: d.id})))));
+        const deviceData = devices.map(d => ({
+            id: d.id,
+        }));
+        resolve(JSON.parse(JSON.stringify(deviceData)));
       }
     }, LATENCY);
   });
@@ -24,6 +27,16 @@ export async function getOtaSessions(): Promise<OtaSession[]> {
     return new Promise(resolve => {
         setTimeout(() => {
             resolve(JSON.parse(JSON.stringify(otaSessions)));
+        }, LATENCY);
+    });
+}
+
+export async function getOtaSession(sessionId: string): Promise<OtaSession | undefined> {
+    console.log(`Fetching ota session: ${sessionId}`);
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const session = otaSessions.find(s => s.id === sessionId);
+            resolve(session ? JSON.parse(JSON.stringify(session)) : undefined);
         }, LATENCY);
     });
 }
