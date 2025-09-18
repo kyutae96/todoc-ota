@@ -39,7 +39,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const OWNER_EMAIL = 'kyuate0523@to-doc.com';
+const OWNER_EMAIL = 'kyutae0523@to-doc.com';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -153,7 +153,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     if (newUserRole === 'unauthorized') {
       await signOut(auth);
-      throw new Error('Account created successfully. An administrator must approve your account before you can log in.');
     }
   };
 

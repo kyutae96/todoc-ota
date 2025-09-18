@@ -10,6 +10,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from '@/components/ui/sidebar';
+import { withAuth } from '@/contexts/auth-context';
 
 function DashboardLayout({
   children,
@@ -36,4 +37,4 @@ function DashboardLayout({
   );
 }
 
-export default DashboardLayout;
+export default withAuth(DashboardLayout);
