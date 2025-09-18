@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, ReactNode, useMemo, useEffe
 import { useRouter, usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import {
   onAuthStateChanged,
@@ -56,22 +57,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (userDoc.exists()) {
             const userData = userDoc.data();
             const role = userData.role || 'unauthorized';
+            
+            setUser({
+              uid: firebaseUser.uid,
+              name: userData.name || firebaseUser.email?.split('@')[0] || 'User',
+              email: firebaseUser.email || '',
+              avatar: userData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+              organization: userData.organization
+            });
+            setUserRole(role);
 
-            if (role === 'unauthorized') {
-                setUser(null);
-                await signOut(auth);
-            } else {
-                 setUser({
-                    uid: firebaseUser.uid,
-                    name: userData.name || firebaseUser.email?.split('@')[0] || 'User',
-                    email: firebaseUser.email || '',
-                    avatar: userData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-                    organization: userData.organization
-                });
-                setUserRole(role);
-            }
         } else {
-            // This case should ideally be handled by signup, but as a fallback:
+            // This case handles users created in Auth but not yet in Firestore.
             const isOwner = firebaseUser.email === OWNER_EMAIL;
             const newUserRole = isOwner ? 'admin' : 'unauthorized';
             const newUser: User = {
@@ -86,14 +83,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 avatar: newUser.avatar,
                 role: newUserRole
             });
-            if (newUserRole === 'unauthorized') {
-                setUser(null);
-                setUserRole('unauthorized');
-                await signOut(auth);
-            } else {
-                setUser(newUser);
-                setUserRole(newUserRole);
-            }
+
+            setUser(newUser);
+            setUserRole(newUserRole);
         }
       } else {
         setUser(null);
@@ -114,10 +106,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (userDoc.exists()) {
         const userData = userDoc.data();
-        if (userData.role === 'unauthorized') {
-            await signOut(auth);
-            throw new Error('Your account has not been approved by an administrator.');
-        }
         // Special check for owner email on login
         if (userData.email === OWNER_EMAIL && userData.role !== 'admin') {
             await setDoc(userDocRef, { role: 'admin' }, { merge: true });
@@ -132,10 +120,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
             role: newUserRole
         });
-        if (newUserRole === 'unauthorized') {
-            await signOut(auth);
-            throw new Error('Your account has been created and is pending approval.');
-        }
     }
   };
   
@@ -155,9 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     await setDoc(doc(db, 'users', firebaseUser.uid), userData);
     
-    if (newUserRole === 'unauthorized') {
-      await signOut(auth);
-    }
+    // Don't sign out unauthorized users, let the UI handle them
   };
 
   const logout = async () => {
@@ -216,22 +198,17 @@ const adminRoutes = ['/dashboard/users'];
 // A HOC to protect routes
 export function withAuth(Component: React.ComponentType<any>) {
   return function AuthenticatedComponent(props: any) {
-    const { isAuthenticated, isLoading, userRole } = useAuth();
+    const { isAuthenticated, isLoading, userRole, logout } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {
-      if (!isLoading) {
-        if (!isAuthenticated || userRole === 'unauthorized') {
+      if (!isLoading && !isAuthenticated) {
           router.push('/login');
-        } else if (userRole !== 'admin' && adminRoutes.some(route => pathname.startsWith(route))) {
-          // If not an admin and trying to access an admin route, redirect
-          router.push('/dashboard');
-        }
       }
-    }, [isAuthenticated, isLoading, router, userRole, pathname]);
+    }, [isAuthenticated, isLoading, router]);
 
-    if (isLoading || !isAuthenticated || userRole === 'unauthorized') {
+    if (isLoading || !isAuthenticated) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-background">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -239,7 +216,19 @@ export function withAuth(Component: React.ComponentType<any>) {
       )
     }
 
-    // Final check during render, in case useEffect hasn't run yet
+    if (userRole === 'unauthorized') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center p-4">
+                <h1 className="text-2xl font-bold mb-4">Awaiting Approval</h1>
+                <p className="text-muted-foreground mb-8">Your account has been created and is waiting for administrator approval.</p>
+                <Button onClick={logout}>
+                    Log Out
+                </Button>
+            </div>
+        )
+    }
+
+    // Final check for admin routes
     if (userRole !== 'admin' && adminRoutes.some(route => pathname.startsWith(route))) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem-1px)]">

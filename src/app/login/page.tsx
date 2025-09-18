@@ -48,16 +48,10 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
         await signup(email, password);
-        // Special case for owner to log in immediately
-        try {
-            await login(email, password);
-            router.push('/dashboard');
-        } catch (loginError: any) {
-             toast({
-                title: 'Sign Up Successful',
-                description: 'Your account has been created and is awaiting administrator approval.',
-            });
-        }
+        // Attempt to log the user in immediately after sign up
+        // The withAuth HOC will handle showing the "pending approval" screen
+        await login(email, password);
+        router.push('/dashboard');
     } catch (error: any) {
         toast({
             variant: 'destructive',
