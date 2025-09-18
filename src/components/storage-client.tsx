@@ -7,6 +7,7 @@ import {
   FileText,
   Folder,
   Loader2,
+  RefreshCw,
   Search,
   Upload,
 } from 'lucide-react';
@@ -105,42 +106,48 @@ export function StorageClient() {
             onChange={(e) => setFilter(e.target.value)}
           />
         </div>
-        {userRole === 'admin' && (
-          <Dialog open={isUploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full md:w-auto bg-accent hover:bg-accent/90">
-                <Upload className="mr-2 h-4 w-4" />
-                Upload File
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleSubmit(onUploadSubmit)}>
-                <DialogHeader>
-                  <DialogTitle>Upload File</DialogTitle>
-                  <DialogDescription>
-                    Select a file and specify a destination path within the /OTA folder.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid w-full max-w-sm items-center gap-1.5">
-                    <Label htmlFor="file">File</Label>
-                    <Input id="file" type="file" {...register("file", { required: true })} />
-                  </div>
-                  <div className="grid w-full max-w-sm items-center gap-1.5">
-                    <Label htmlFor="path">Sub-path (optional)</Label>
-                    <Input id="path" placeholder="e.g. firmware/v1.0" {...register("path")} />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Upload
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={fetchData} disabled={isLoading} className="w-full md:w-auto">
+                <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
+                Refresh
+            </Button>
+            {userRole === 'admin' && (
+              <Dialog open={isUploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full md:w-auto bg-accent hover:bg-accent/90">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload File
                   </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <form onSubmit={handleSubmit(onUploadSubmit)}>
+                    <DialogHeader>
+                      <DialogTitle>Upload File</DialogTitle>
+                      <DialogDescription>
+                        Select a file and specify a destination path within the /OTA folder.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid w-full max-w-sm items-center gap-1.5">
+                        <Label htmlFor="file">File</Label>
+                        <Input id="file" type="file" {...register("file", { required: true })} />
+                      </div>
+                      <div className="grid w-full max-w-sm items-center gap-1.5">
+                        <Label htmlFor="path">Sub-path (optional)</Label>
+                        <Input id="path" placeholder="e.g. firmware/v1.0" {...register("path")} />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Upload
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

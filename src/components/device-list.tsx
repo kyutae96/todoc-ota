@@ -14,9 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { getDevices } from '@/lib/api';
 import { type Device } from '@/lib/data';
-import { ArrowUpDown, Search } from 'lucide-react';
+import { ArrowUpDown, RefreshCw, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from './ui/card';
+import { cn } from '@/lib/utils';
 
 const PAGE_SIZE = 10;
 
@@ -30,13 +31,17 @@ export function DeviceList() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
+  const fetchData = () => {
     startDataTransition(async () => {
       setDevices([]);
       setCurrentPage(1);
       const fetchedDevices = await getDevices();
       setDevices(fetchedDevices);
     });
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   const handleSort = (field: keyof Device) => {
@@ -85,8 +90,8 @@ export function DeviceList() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="relative">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input 
             placeholder="Filter devices..." 
@@ -98,6 +103,10 @@ export function DeviceList() {
             }}
           />
         </div>
+         <Button variant="outline" onClick={fetchData} disabled={isLoading}>
+            <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
+            Refresh
+        </Button>
       </div>
 
       <Card>

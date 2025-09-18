@@ -14,10 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { getOtaSessions } from '@/lib/api';
 import { type OtaSession } from '@/lib/data';
-import { ArrowUpDown, Search, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowUpDown, Search, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from './ui/card';
+import { cn } from '@/lib/utils';
 
 const PAGE_SIZE = 10;
 
@@ -38,7 +39,7 @@ export function SessionList({ deviceId }: { deviceId?: string }) {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
+  const fetchData = () => {
     startDataTransition(async () => {
       setSessions([]);
       setCurrentPage(1);
@@ -53,6 +54,10 @@ export function SessionList({ deviceId }: { deviceId?: string }) {
         }
       }));
     });
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   const handleSort = (field: keyof OtaSession) => {
@@ -151,13 +156,19 @@ export function SessionList({ deviceId }: { deviceId?: string }) {
             }}
           />
         </div>
-        {deviceId && (
-            <div className='flex items-center gap-2'>
-                <span className='text-sm text-muted-foreground'>Filtered by device:</span>
-                <Badge variant="outline">{deviceId}</Badge>
-                <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/sessions')}>Clear</Button>
-            </div>
-        )}
+        <div className="flex items-center gap-2">
+            {deviceId && (
+                <div className='flex items-center gap-2'>
+                    <span className='text-sm text-muted-foreground'>Filtered by device:</span>
+                    <Badge variant="outline">{deviceId}</Badge>
+                    <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/sessions')}>Clear</Button>
+                </div>
+            )}
+            <Button variant="outline" onClick={fetchData} disabled={isLoading}>
+                <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
+                Refresh
+            </Button>
+        </div>
       </div>
 
       <Card>
