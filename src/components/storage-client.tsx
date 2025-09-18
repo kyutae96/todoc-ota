@@ -1,6 +1,3 @@
-
-
-
 'use client';
 
 import * as React from 'react';
@@ -19,7 +16,6 @@ import {
   FolderPlus
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/contexts/auth-context';
 import { formatBytes } from '@/lib/utils';
 import { Input } from './ui/input';
 import { Button, buttonVariants } from './ui/button';
@@ -86,7 +82,6 @@ export function StorageClient() {
   const [files, setFiles] = useState<StorageFile[]>([]);
   const [isLoading, startDataTransition] = useTransition();
   const [filter, setFilter] = useState('');
-  const { userRole } = useAuth();
   const { toast } = useToast();
   
   const { register, handleSubmit, formState: { isSubmitting }, reset } = useForm<Inputs>();
@@ -234,89 +229,87 @@ export function StorageClient() {
                       <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
                       Refresh
                   </Button>
-                  {userRole === 'admin' && (
-                    <>
-                    <Dialog open={isFolderDialogOpen} onOpenChange={setFolderDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full md:w-auto">
-                                <FolderPlus className="mr-2 h-4 w-4" />
-                                New Folder
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                            <Form {...folderForm}>
-                                <form onSubmit={folderForm.handleSubmit(onCreateFolderSubmit)} className="space-y-4">
-                                    <DialogHeader>
-                                        <DialogTitle>Create New Folder</DialogTitle>
-                                        <DialogDescription>
-                                            Enter a name for your new folder in <span className="font-medium text-foreground">{currentPath}</span>.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    
-                                    <FormField
-                                        control={folderForm.control}
-                                        name="folderName"
-                                        rules={{ 
-                                            required: "Folder name is required",
-                                            pattern: {
-                                                value: /^ver\d+\.\d+\.\d+$/,
-                                                message: "Folder name must be in the format verX.Y.Z (e.g., ver1.0.0)"
-                                            }
-                                        }}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Folder Name</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="ver1.0.0" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    
-                                    <DialogFooter>
-                                        <Button type="submit" disabled={folderForm.formState.isSubmitting}>
-                                            {folderForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Create Folder
-                                        </Button>
-                                    </DialogFooter>
-                                </form>
-                            </Form>
-                        </DialogContent>
-                    </Dialog>
-
-                    <Dialog open={isUploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                  <>
+                  <Dialog open={isFolderDialogOpen} onOpenChange={setFolderDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button className="w-full md:w-auto bg-accent hover:bg-accent/90">
-                          <Upload className="mr-2 h-4 w-4" />
-                          Upload File(s)
-                        </Button>
+                          <Button variant="outline" className="w-full md:w-auto">
+                              <FolderPlus className="mr-2 h-4 w-4" />
+                              New Folder
+                          </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
-                        <form onSubmit={handleSubmit(onUploadSubmit)}>
-                          <DialogHeader>
-                            <DialogTitle>Upload Files</DialogTitle>
-                            <DialogDescription>
-                              The files will be uploaded to the current directory: <span className="font-medium text-foreground">{currentPath}</span>
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid w-full max-w-sm items-center gap-1.5">
-                              <Label htmlFor="file">Files</Label>
-                              <Input id="file" type="file" {...register("file", { required: true })} multiple />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button type="submit" disabled={isSubmitting}>
-                              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                              Upload
-                            </Button>
-                          </DialogFooter>
-                        </form>
+                          <Form {...folderForm}>
+                              <form onSubmit={folderForm.handleSubmit(onCreateFolderSubmit)} className="space-y-4">
+                                  <DialogHeader>
+                                      <DialogTitle>Create New Folder</DialogTitle>
+                                      <DialogDescription>
+                                          Enter a name for your new folder in <span className="font-medium text-foreground">{currentPath}</span>.
+                                      </DialogDescription>
+                                  </DialogHeader>
+                                  
+                                  <FormField
+                                      control={folderForm.control}
+                                      name="folderName"
+                                      rules={{ 
+                                          required: "Folder name is required",
+                                          pattern: {
+                                              value: /^ver\d+\.\d+\.\d+$/,
+                                              message: "Folder name must be in the format verX.Y.Z (e.g., ver1.0.0)"
+                                          }
+                                      }}
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>Folder Name</FormLabel>
+                                              <FormControl>
+                                                  <Input placeholder="ver1.0.0" {...field} />
+                                              </FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                                  
+                                  <DialogFooter>
+                                      <Button type="submit" disabled={folderForm.formState.isSubmitting}>
+                                          {folderForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                          Create Folder
+                                      </Button>
+                                  </DialogFooter>
+                              </form>
+                          </Form>
                       </DialogContent>
-                    </Dialog>
-                    </>
-                  )}
+                  </Dialog>
+
+                  <Dialog open={isUploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full md:w-auto bg-accent hover:bg-accent/90">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload File(s)
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <form onSubmit={handleSubmit(onUploadSubmit)}>
+                        <DialogHeader>
+                          <DialogTitle>Upload Files</DialogTitle>
+                          <DialogDescription>
+                            The files will be uploaded to the current directory: <span className="font-medium text-foreground">{currentPath}</span>
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid w-full max-w-sm items-center gap-1.5">
+                            <Label htmlFor="file">Files</Label>
+                            <Input id="file" type="file" {...register("file", { required: true })} multiple />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Upload
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                  </>
               </div>
             </CardContent>
           </Card>
@@ -355,16 +348,14 @@ export function StorageClient() {
                   <FileText className="size-8 text-primary" />
                 }
                 <CardTitle className="font-sans text-base font-medium leading-tight truncate" title={file.name}>{file.name}</CardTitle>
-                 {userRole === 'admin' && (
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="size-7 ml-auto shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => setItemToDelete(file)}
-                    >
-                        <Trash2 className="size-4" />
-                    </Button>
-                )}
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="size-7 ml-auto shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => setItemToDelete(file)}
+                >
+                    <Trash2 className="size-4" />
+                </Button>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground pb-4">
                  <p className='truncate'>Path: /{file.path}</p>

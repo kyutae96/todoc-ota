@@ -1,6 +1,5 @@
 'use client';
 
-import { withAuth } from '@/contexts/auth-context';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { Logo } from '@/components/logo';
@@ -37,4 +36,4 @@ function DashboardLayout({
   );
 }
 
-export default withAuth(DashboardLayout);
+export default DashboardLayout;
