@@ -47,22 +47,18 @@ export async function getOtaSessions(): Promise<OtaSession[]> {
 
 export async function getOtaSession(sessionId: string): Promise<OtaSession | undefined> {
     try {
-        // We need to find which device this session belongs to.
-        // A collectionGroup query is the most efficient way to find the session document
-        // without knowing its full path.
-        const sessionQuery = query(collectionGroup(db, 'otaSessions'), where('__name__', '==', `devices/${sessionId.split('/')[0]}/otaSessions/${sessionId.split('/')[2]}`), limit(1));
+        const sessionQuery = query(collectionGroup(db, 'otaSessions'), where('__name__', '==', sessionId), limit(1));
         const snapshot = await getDocs(sessionQuery);
 
-
         if (snapshot.empty) {
-             // Fallback for direct ID match if the above path-based query fails.
-            const fallbackQuery = query(collectionGroup(db, 'otaSessions'), where('__name__', '==', sessionId));
+            const fallbackQuery = query(collectionGroup(db, 'otaSessions'));
             const fallbackSnapshot = await getDocs(fallbackQuery);
-            if(fallbackSnapshot.empty) {
+            const sessionDoc = fallbackSnapshot.docs.find(d => d.id === sessionId);
+            
+            if (!sessionDoc) {
                 console.log(`No OTA session found with ID: ${sessionId}`);
                 return undefined;
             }
-            const sessionDoc = fallbackSnapshot.docs[0];
             const sessionData = sessionDoc.data();
             const eventsQuery = query(collection(sessionDoc.ref, 'events'), orderBy('at', 'desc'));
             const eventsSnapshot = await getDocs(eventsQuery);
