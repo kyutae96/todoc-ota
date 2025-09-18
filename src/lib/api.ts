@@ -47,43 +47,19 @@ export async function getOtaSessions(): Promise<OtaSession[]> {
 
 export async function getOtaSession(sessionId: string): Promise<OtaSession | undefined> {
     try {
-        const sessionQuery = query(collectionGroup(db, 'otaSessions'), where('__name__', '==', sessionId), limit(1));
-        const snapshot = await getDocs(sessionQuery);
-
-        if (snapshot.empty) {
-            const fallbackQuery = query(collectionGroup(db, 'otaSessions'));
-            const fallbackSnapshot = await getDocs(fallbackQuery);
-            const sessionDoc = fallbackSnapshot.docs.find(d => d.id === sessionId);
-            
-            if (!sessionDoc) {
-                console.log(`No OTA session found with ID: ${sessionId}`);
-                return undefined;
-            }
-            const sessionData = sessionDoc.data();
-            const eventsQuery = query(collection(sessionDoc.ref, 'events'), orderBy('at', 'desc'));
-            const eventsSnapshot = await getDocs(eventsQuery);
-
-            const events = eventsSnapshot.docs.map(eventDoc => {
-                const eventData = eventDoc.data();
-                return {
-                    id: eventDoc.id,
-                    ...eventData,
-                    at: eventData.at?.toDate(),
-                }
-            });
-
-            return {
-                id: sessionDoc.id,
-                ...sessionData,
-                startedAt: sessionData.startedAt?.toDate(),
-                endedAt: sessionData.endedAt?.toDate(),
-                events: events,
-            } as OtaSession;
+        // Query the entire collection group to find the document by its ID.
+        const fallbackQuery = query(collectionGroup(db, 'otaSessions'));
+        const fallbackSnapshot = await getDocs(fallbackQuery);
+        const sessionDoc = fallbackSnapshot.docs.find(d => d.id === sessionId);
+        
+        if (!sessionDoc) {
+            console.log(`No OTA session found with ID: ${sessionId}`);
+            return undefined;
         }
 
-        const sessionDoc = snapshot.docs[0];
         const sessionData = sessionDoc.data();
-
+        
+        // Fetch events subcollection
         const eventsQuery = query(collection(sessionDoc.ref, 'events'), orderBy('at', 'desc'));
         const eventsSnapshot = await getDocs(eventsQuery);
 
