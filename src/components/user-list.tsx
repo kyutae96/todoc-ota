@@ -26,12 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 
 const PAGE_SIZE = 10;
 
@@ -195,18 +189,9 @@ export function UserList() {
                             </SelectTrigger>
                             <SelectContent>
                                 {(Object.keys(roleDescriptions) as Role[]).map(role => (
-                                  <TooltipProvider key={role} delayDuration={100}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <SelectItem value={role}>
-                                          {role.charAt(0).toUpperCase() + role.slice(1)}
-                                        </SelectItem>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right" align="start">
-                                        <p className="max-w-xs">{roleDescriptions[role]}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
+                                    <SelectItem key={role} value={role}>
+                                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                           </Select>
