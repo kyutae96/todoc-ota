@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, ChevronsUpDown, UserCog, User } from 'lucide-react';
+import { Check, ChevronsUpDown, UserCog, User, LogOut } from 'lucide-react';
 import { useAuth, Role } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,9 +12,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from './ui/sidebar';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Skeleton } from './ui/skeleton';
 
 function getTitleFromPath(path: string): string {
   if (path.includes('/storage')) return 'Storage Browser';
@@ -45,12 +46,30 @@ function Breadcrumbs() {
 }
 
 export function DashboardHeader() {
-  const { user, userRole, setUserRole, UserAvatar } = useAuth();
+  const { user, userRole, setUserRole, UserAvatar, logout, isLoading } = useAuth();
+  const router = useRouter();
   
   const roles: { role: Role; label: string; icon: React.ElementType }[] = [
     { role: 'manager', label: 'Manager', icon: User },
     { role: 'admin', label: 'Administrator', icon: UserCog },
   ];
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+  
+  if (isLoading || !user) {
+    return (
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+            <div className="flex items-center gap-2">
+                <SidebarTrigger className="md:hidden" />
+                <Skeleton className="h-6 w-32" />
+            </div>
+            <Skeleton className="h-10 w-48 rounded-md" />
+        </header>
+    )
+  }
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
@@ -84,6 +103,11 @@ export function DashboardHeader() {
               <Check className={cn('ml-auto size-4', userRole === role ? 'opacity-100' : 'opacity-0')} />
             </DropdownMenuItem>
           ))}
+          <DropdownMenuSeparator />
+           <DropdownMenuItem onSelect={handleLogout}>
+              <LogOut className="mr-2 size-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
