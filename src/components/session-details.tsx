@@ -5,7 +5,7 @@ import { OtaEvent, OtaSession } from '@/lib/data';
 import { useEffect, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { CheckCircle, Download, Power, AlertTriangle, XCircle, FileText, Server, Sliders, Hash, Calendar, Clock, GitBranch, Play } from 'lucide-react';
+import { CheckCircle, Download, Power, AlertTriangle, XCircle, FileText, Server, Sliders, Hash, Calendar, Clock, GitBranch, Play, Layers, FileStack } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { Progress } from './ui/progress';
 
@@ -31,7 +31,7 @@ function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType, lab
             <Icon className="size-5 text-muted-foreground mt-1" />
             <div className="flex flex-col">
                 <span className="text-sm text-muted-foreground">{label}</span>
-                <span className="font-medium">{value}</span>
+                <span className="font-medium break-all">{value}</span>
             </div>
         </div>
     )
@@ -90,6 +90,9 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
                     <DetailItem icon={Calendar} label="Started At" value={session.startedAt.toLocaleString()} />
                     <DetailItem icon={Clock} label="Ended At" value={session.endedAt ? session.endedAt.toLocaleString() : 'N/A'} />
                     <DetailItem icon={Hash} label="Error Code" value={session.errorCode ?? 'None'} />
+                    <DetailItem icon={Layers} label="Pre-Update Slot" value={session.preSlot} />
+                    <DetailItem icon={Layers} label="Post-Update Slot" value={session.currentSlotAfter} />
+                    <DetailItem icon={FileStack} label="Files" value={session.files.join(', ')} />
                  </div>
             </CardContent>
         </Card>
@@ -148,7 +151,7 @@ function SessionDetailsSkeleton() {
                     <Skeleton className="h-6 w-1/2" />
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
+                    {Array.from({ length: 9 }).map((_, i) => (
                         <div key={i} className="flex items-start gap-3 p-2">
                             <Skeleton className="size-6 rounded-full mt-1" />
                             <div className="flex-1 space-y-2">
