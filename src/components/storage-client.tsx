@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -46,6 +47,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { cn } from '@/lib/utils';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 
 type Inputs = {
     file: FileList;
@@ -232,26 +234,44 @@ export function StorageClient() {
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">
-                            <form onSubmit={folderForm.handleSubmit(onCreateFolderSubmit)}>
-                                <DialogHeader>
-                                    <DialogTitle>Create New Folder</DialogTitle>
-                                    <DialogDescription>
-                                        Enter a name for your new folder in <span className="font-medium text-foreground">{currentPath}</span>.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                    <div className="grid w-full max-w-sm items-center gap-1.5">
-                                        <Label htmlFor="folderName">Folder Name</Label>
-                                        <Input id="folderName" type="text" {...folderForm.register("folderName", { required: true })} />
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit" disabled={folderForm.formState.isSubmitting}>
-                                        {folderForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Create Folder
-                                    </Button>
-                                </DialogFooter>
-                            </form>
+                            <Form {...folderForm}>
+                                <form onSubmit={folderForm.handleSubmit(onCreateFolderSubmit)} className="space-y-4">
+                                    <DialogHeader>
+                                        <DialogTitle>Create New Folder</DialogTitle>
+                                        <DialogDescription>
+                                            Enter a name for your new folder in <span className="font-medium text-foreground">{currentPath}</span>.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    
+                                    <FormField
+                                        control={folderForm.control}
+                                        name="folderName"
+                                        rules={{ 
+                                            required: "Folder name is required",
+                                            pattern: {
+                                                value: /^ver\(\d+\.\d+\.\d+\)$/,
+                                                message: "Folder name must be in the format ver(major.minor.fetch)"
+                                            }
+                                        }}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Folder Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="ver(1.0.0)" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    
+                                    <DialogFooter>
+                                        <Button type="submit" disabled={folderForm.formState.isSubmitting}>
+                                            {folderForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Create Folder
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </Form>
                         </DialogContent>
                     </Dialog>
 
@@ -372,3 +392,5 @@ export function StorageClient() {
     </div>
   );
 }
+
+    
