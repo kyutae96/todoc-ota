@@ -26,9 +26,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Badge } from './ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 const PAGE_SIZE = 10;
+
+const roleDescriptions: Record<Role, string> = {
+    admin: 'Full access to all features, including user management and storage deletion.',
+    manager: 'Can view devices and sessions, and browse storage, but cannot manage users or delete files.',
+    unauthorized: 'No access to any dashboard features. Account is pending administrator approval.',
+};
 
 export function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -174,20 +185,31 @@ export function UserList() {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.organization || 'N/A'}</TableCell>
                       <TableCell>
-                        <Select
-                          value={user.role}
-                          onValueChange={(newRole) => handleRoleChange(user.uid, newRole as Role)}
-                          disabled={user.uid === currentUser?.uid}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select a role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="unauthorized">Unauthorized</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          <Select
+                            value={user.role}
+                            onValueChange={(newRole) => handleRoleChange(user.uid, newRole as Role)}
+                            disabled={user.uid === currentUser?.uid}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {(Object.keys(roleDescriptions) as Role[]).map(role => (
+                                  <TooltipProvider key={role} delayDuration={100}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <SelectItem value={role}>
+                                          {role.charAt(0).toUpperCase() + role.slice(1)}
+                                        </SelectItem>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right" align="start">
+                                        <p className="max-w-xs">{roleDescriptions[role]}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                ))}
+                            </SelectContent>
+                          </Select>
                       </TableCell>
                     </TableRow>
                   ))
