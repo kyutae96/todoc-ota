@@ -5,7 +5,7 @@ import { OtaEvent, OtaSession } from '@/lib/data';
 import { useEffect, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { CheckCircle, Download, Power, AlertTriangle, XCircle, FileText, Server, Sliders, Hash, Calendar, Clock, GitBranch, Play, Layers, FileStack } from 'lucide-react';
+import { CheckCircle, Download, Power, AlertTriangle, XCircle, FileText, Server, Sliders, Hash, Calendar, Clock, GitBranch, Play, Layers, FileStack, User, GanttChart } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { Progress } from './ui/progress';
 
@@ -85,13 +85,16 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
             <CardContent>
                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <DetailItem icon={Server} label="Device Name" value={session.deviceName} />
+                    <DetailItem icon={User} label="User ID" value={session.userId} />
                     <DetailItem icon={GitBranch} label="App Version" value={session.appVersion} />
                     <DetailItem icon={FileText} label="Source Path" value={session.sourcePath} />
                     <DetailItem icon={Calendar} label="Started At" value={session.startedAt.toLocaleString()} />
                     <DetailItem icon={Clock} label="Ended At" value={session.endedAt ? session.endedAt.toLocaleString() : 'N/A'} />
                     <DetailItem icon={Hash} label="Error Code" value={session.errorCode ?? 'None'} />
                     <DetailItem icon={Layers} label="Pre-Update Slot" value={session.preSlot} />
+                    <DetailItem icon={GanttChart} label="Slot Selected" value={session.slotSelected} />
                     <DetailItem icon={Layers} label="Post-Update Slot" value={session.currentSlotAfter} />
+                    <DetailItem icon={Sliders} label="Chunk Size" value={session.chunkSize} />
                     <DetailItem icon={FileStack} label="Files" value={session.files.join(', ')} />
                  </div>
             </CardContent>
@@ -151,7 +154,7 @@ function SessionDetailsSkeleton() {
                     <Skeleton className="h-6 w-1/2" />
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Array.from({ length: 9 }).map((_, i) => (
+                    {Array.from({ length: 12 }).map((_, i) => (
                         <div key={i} className="flex items-start gap-3 p-2">
                             <Skeleton className="size-6 rounded-full mt-1" />
                             <div className="flex-1 space-y-2">
