@@ -86,6 +86,17 @@ export async function getOtaSession(sessionId: string): Promise<OtaSession | und
     }
 }
 
+// Add StorageFile type because it was removed from data.ts
+export type StorageFile = {
+  id: string;
+  name: string;
+  path: string;
+  size: number;
+  type: 'file' | 'folder';
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export async function getStorageFiles(path: string = 'OTA/'): Promise<StorageFile[]> {
     try {
         const listRef = ref(storage, path);
@@ -147,14 +158,3 @@ export async function uploadFileToStorage(file: File, path: string): Promise<Sto
         throw error;
     }
 }
-
-// Add StorageFile type because it was removed from data.ts
-export type StorageFile = {
-  id: string;
-  name: string;
-  path: string;
-  size: number;
-  type: 'file' | 'folder';
-  createdAt: Date;
-  updatedAt: Date;
-};

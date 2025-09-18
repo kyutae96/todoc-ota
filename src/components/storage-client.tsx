@@ -1,8 +1,9 @@
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect, useMemo, useTransition } from 'react';
 import { getStorageFiles, uploadFileToStorage } from '@/lib/api';
-import { type StorageFile } from '@/lib/data';
+import { type StorageFile } from '@/lib/api';
 import {
   FileText,
   Folder,
@@ -14,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/auth-context';
-import { formatBytes, cn } from '@/lib/utils';
+import { formatBytes } from '@/lib/utils';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
@@ -30,6 +31,7 @@ import {
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
+import { cn } from '@/lib/utils';
 
 type Inputs = {
     file: FileList;
