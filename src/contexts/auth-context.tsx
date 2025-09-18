@@ -15,7 +15,7 @@ import {
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 export type Role = 'manager' | 'admin' | 'unauthorized';
 
@@ -32,9 +32,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   userRole: Role;
-  setUserRole: (role: Role) => void;
   login: (email: string, pass: string) => Promise<void>;
-  signup: (email: string, pass: string) => Promise<void>;
+  signup: (email: string, pass: string, name: string, organization: string) => Promise<void>;
   logout: () => void;
   UserAvatar: React.FC<{className?: string}>;
   isLoading: boolean;
@@ -117,7 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userData = userDoc.data();
         // Special check for owner email on login
         if (userData.email === OWNER_EMAIL && userData.role !== 'admin') {
-            await setDoc(userDocRef, { role: 'admin' }, { merge: true });
+            await updateDoc(userDocRef, { role: 'admin' });
         }
     } else {
         // This handles a case where a user exists in Auth but not in Firestore.
@@ -125,14 +124,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const newUserRole = isOwner ? 'admin' : 'unauthorized';
         await setDoc(userDocRef, {
             email: firebaseUser.email,
-            name: firebaseUser.email?.split('@')[0] || 'New User',
+            name: isOwner ? '김규태' : (firebaseUser.email?.split('@')[0] || 'New User'),
+            organization: isOwner ? '토닥' : undefined,
             avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
             role: newUserRole
         });
     }
   };
   
-  const signup = async (email: string, pass: string): Promise<void> => {
+  const signup = async (email: string, pass: string, name: string, organization: string): Promise<void> => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const firebaseUser = userCredential.user;
     
@@ -142,7 +142,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userData = {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
-        name: firebaseUser.email?.split('@')[0] || 'New User',
+        name: isOwner ? '김규태' : name,
+        organization: isOwner ? '토닥' : organization,
         avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
         role: newUserRole
     };
@@ -158,23 +159,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return (
       <Avatar className={className}>
         <AvatarImage src={user.avatar} alt={user.name} />
-        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+        <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
       </Avatar>
     );
   }
   
-  const value: AuthContextType = { 
+  const value: AuthContextType = useMemo(() => ({
     isAuthenticated, 
     user, 
     userRole, 
-    setUserRole, 
     login, 
     signup,
     logout, 
     UserAvatar, 
     isLoading,
     refreshUser
-  };
+  }), [isAuthenticated, user, userRole, isLoading, refreshUser]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -206,12 +206,16 @@ export function withAuth(Component: React.ComponentType<any>) {
       }
     }, [isAuthenticated, isLoading, router]);
 
-    if (isLoading || !isAuthenticated) {
+    if (isLoading) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-background">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       )
+    }
+
+    if (!isAuthenticated) {
+        return null; // or a loading spinner, as the useEffect will redirect
     }
 
     if (userRole === 'unauthorized') {

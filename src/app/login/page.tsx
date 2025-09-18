@@ -21,6 +21,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [organization, setOrganization] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login, signup } = useAuth();
@@ -47,11 +49,16 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-        await signup(email, password);
-        // Attempt to log the user in immediately after sign up
-        // The withAuth HOC will handle showing the "pending approval" screen
-        await login(email, password);
-        router.push('/dashboard');
+        await signup(email, password, name, organization);
+        toast({
+          title: 'Sign Up Successful',
+          description: 'Your account has been created and is awaiting administrator approval.',
+        });
+        // Clear form for security, direct user to check for approval
+        setEmail('');
+        setPassword('');
+        setName('');
+        setOrganization('');
     } catch (error: any) {
         toast({
             variant: 'destructive',
@@ -116,6 +123,30 @@ export default function LoginPage() {
                 </TabsContent>
                 <TabsContent value="signup">
                      <form onSubmit={handleSignUp} className="grid gap-4 mt-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="signup-name">Name</Label>
+                            <Input
+                                id="signup-name"
+                                type="text"
+                                placeholder="Your name"
+                                required
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                         <div className="grid gap-2">
+                            <Label htmlFor="signup-organization">Organization</Label>
+                            <Input
+                                id="signup-organization"
+                                type="text"
+                                placeholder="Your organization"
+                                required
+                                value={organization}
+                                onChange={(e) => setOrganization(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
                         <div className="grid gap-2">
                             <Label htmlFor="signup-email">Email</Label>
                             <Input
