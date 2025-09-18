@@ -18,8 +18,8 @@ const firebaseConfig = {
   "apiKey": "AIzaSyAioH5aUo19iEWtSyqrkm21scRLkI3nhts",
   // TODO: Replace with your actual auth domain from the Firebase console.
   "authDomain": "todoc-ota.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "1003104102687"
+  "measurementId": "G-053KGCPB57",
+  "messagingSenderId": "995016378087"
 };
 
 // Initialize Firebase

@@ -6,10 +6,20 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  type User as FirebaseUser,
+} from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export type Role = 'manager' | 'admin';
 
 interface User {
+  uid: string;
   name: string;
   email: string;
   avatar: string;
@@ -21,6 +31,7 @@ interface AuthContextType {
   userRole: Role;
   setUserRole: (role: Role) => void;
   login: (email: string, pass: string) => Promise<void>;
+  signup: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   UserAvatar: React.FC<{className?: string}>;
   isLoading: boolean;
@@ -30,40 +41,84 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<Role>('manager');
   const [isLoading, setIsLoading] = useState(true);
+  const isAuthenticated = !!user;
 
   useEffect(() => {
-    // In a real app, you'd check a token in localStorage here
-    setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUser({
+                uid: firebaseUser.uid,
+                name: userData.name || firebaseUser.email?.split('@')[0] || 'User',
+                email: firebaseUser.email || '',
+                avatar: userData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+            });
+            setUserRole(userData.role || 'manager');
+        } else {
+             // Create user doc if it doesn't exist (e.g. first login)
+            const newUser: User = {
+                uid: firebaseUser.uid,
+                name: firebaseUser.email?.split('@')[0] || 'User',
+                email: firebaseUser.email || '',
+                avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+            };
+            await setDoc(doc(db, 'users', firebaseUser.uid), { 
+                email: newUser.email,
+                name: newUser.name,
+                avatar: newUser.avatar,
+                role: 'manager'
+            });
+            setUser(newUser);
+            setUserRole('manager');
+        }
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, pass: string): Promise<void> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockUser = {
-          name: userRole === 'admin' ? 'Alex Doe (Admin)' : 'Alex Doe',
-          email: email,
-          avatar: 'https://i.pravatar.cc/150?u=alexdoe',
-        };
-        setUser(mockUser);
-        setIsAuthenticated(true);
-        resolve();
-      }, 1000);
+    await signInWithEmailAndPassword(auth, email, pass);
+  };
+  
+  const signup = async (email: string, pass: string): Promise<void> => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+    const firebaseUser = userCredential.user;
+    
+    // Create user profile in Firestore
+    const userData = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        name: firebaseUser.email?.split('@')[0] || 'New User',
+        avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+        role: 'manager' // Default role
+    };
+    await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+
+    setUser({
+        ...userData,
     });
+    setUserRole('manager');
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    await signOut(auth);
   };
 
   const dynamicUser = useMemo(() => {
     if (!user) return null;
+    const displayName = user.name || user.email;
     return {
       ...user,
-      name: userRole === 'admin' ? 'Alex Doe (Admin)' : 'Alex Doe',
+      name: userRole === 'admin' ? `${displayName} (Admin)` : displayName,
     }
   }, [user, userRole])
 
@@ -77,9 +132,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       </Avatar>
     );
   }
+  
+  const value: AuthContextType = { 
+    isAuthenticated, 
+    user: dynamicUser, 
+    userRole, 
+    setUserRole, 
+    login, 
+    signup,
+    logout, 
+    UserAvatar, 
+    isLoading 
+  };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user: dynamicUser, userRole, setUserRole, login, logout, UserAvatar, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

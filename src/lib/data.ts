@@ -1,3 +1,4 @@
+
 export type OtaSession = {
   id: string;
   deviceId: string;
@@ -39,4 +40,12 @@ export type SlotHistory = {
 
 export type Device = {
     id: string;
+}
+
+export type User = {
+    uid: string;
+    name: string;
+    email: string;
+    avatar: string;
+    role: 'manager' | 'admin';
 }
