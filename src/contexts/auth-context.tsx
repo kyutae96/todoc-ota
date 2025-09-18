@@ -16,7 +16,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-export type Role = 'manager' | 'admin';
+export type Role = 'manager' | 'admin' | 'unauthorized';
 
 interface User {
   uid: string;
@@ -41,7 +41,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<Role>('manager');
+  const [userRole, setUserRole] = useState<Role>('unauthorized');
   const [isLoading, setIsLoading] = useState(true);
   const isAuthenticated = !!user;
 
@@ -52,15 +52,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
             const userData = userDoc.data();
-            setUser({
-                uid: firebaseUser.uid,
-                name: userData.name || firebaseUser.email?.split('@')[0] || 'User',
-                email: firebaseUser.email || '',
-                avatar: userData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-            });
-            setUserRole(userData.role || 'manager');
+            const role = userData.role || 'unauthorized';
+
+            if (role === 'unauthorized') {
+                setUser(null); // Effectively logs them out of the UI
+            } else {
+                 setUser({
+                    uid: firebaseUser.uid,
+                    name: userData.name || firebaseUser.email?.split('@')[0] || 'User',
+                    email: firebaseUser.email || '',
+                    avatar: userData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+                });
+                setUserRole(role);
+            }
         } else {
-             // Create user doc if it doesn't exist (e.g. first login)
+             // Create user doc if it doesn't exist (first login)
             const newUser: User = {
                 uid: firebaseUser.uid,
                 name: firebaseUser.email?.split('@')[0] || 'User',
@@ -71,13 +77,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: newUser.email,
                 name: newUser.name,
                 avatar: newUser.avatar,
-                role: 'manager'
+                role: 'unauthorized'
             });
-            setUser(newUser);
-            setUserRole('manager');
+            setUser(null);
+            setUserRole('unauthorized');
         }
       } else {
         setUser(null);
+        setUserRole('unauthorized');
       }
       setIsLoading(false);
     });
@@ -86,27 +93,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, pass: string): Promise<void> => {
-    await signInWithEmailAndPassword(auth, email, pass);
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    const firebaseUser = userCredential.user;
+    
+    // Check user role after sign-in
+    const userDocRef = doc(db, 'users', firebaseUser.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.role === 'unauthorized') {
+            await signOut(auth); // Sign out unauthorized user
+            throw new Error('Your account has not been approved by an administrator.');
+        }
+    } else {
+        // This handles a case where a user exists in Auth but not in Firestore.
+        // It will create their user doc and then they'll need to be approved.
+        await setDoc(userDocRef, {
+            email: firebaseUser.email,
+            name: firebaseUser.email?.split('@')[0] || 'New User',
+            avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+            role: 'unauthorized'
+        });
+        await signOut(auth);
+        throw new Error('Your account has been created and is pending approval.');
+    }
   };
   
   const signup = async (email: string, pass: string): Promise<void> => {
+    // This function is no longer used from the UI but is kept for potential future use.
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const firebaseUser = userCredential.user;
     
-    // Create user profile in Firestore
     const userData = {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         name: firebaseUser.email?.split('@')[0] || 'New User',
         avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-        role: 'manager' // Default role
+        role: 'unauthorized'
     };
     await setDoc(doc(db, 'users', firebaseUser.uid), userData);
 
-    setUser({
-        ...userData,
-    });
-    setUserRole('manager');
+    // Sign out immediately after sign up, user needs admin approval.
+    await signOut(auth);
+    throw new Error('Account created successfully. An administrator must approve your account before you can log in.');
   };
 
   const logout = async () => {
@@ -163,16 +193,18 @@ export const useAuth = () => {
 // A HOC to protect routes
 export function withAuth(Component: React.ComponentType<any>) {
   return function AuthenticatedComponent(props: any) {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, userRole } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
-      if (!isLoading && !isAuthenticated) {
-        router.push('/login');
+      if (!isLoading) {
+        if (!isAuthenticated || userRole === 'unauthorized') {
+          router.push('/login');
+        }
       }
-    }, [isAuthenticated, isLoading, router]);
+    }, [isAuthenticated, isLoading, router, userRole]);
 
-    if (isLoading || !isAuthenticated) {
+    if (isLoading || !isAuthenticated || userRole === 'unauthorized') {
       return (
         <div className="flex items-center justify-center min-h-screen bg-background">
           <Loader2 className="h-8 w-8 animate-spin" />

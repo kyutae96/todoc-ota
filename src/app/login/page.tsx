@@ -16,14 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Flame, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { login, signup } = useAuth();
+  const { login } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,33 +39,12 @@ export default function LoginPage() {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error.message || 'Invalid credentials. Please try again.',
+        description: error.message || 'Invalid credentials or account not authorized.',
       });
     } finally {
         setIsLoading(false);
     }
   };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      await signup(email, password);
-      toast({
-        title: 'Signup Successful',
-        description: "Your account has been created.",
-      });
-      router.push('/dashboard');
-    } catch (error: any) {
-       toast({
-        variant: 'destructive',
-        title: 'Signup Failed',
-        description: error.message || 'Could not create account. Please try again.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -83,74 +61,35 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            <TabsContent value="login">
-               <form onSubmit={handleLogin} className="grid gap-4 mt-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input 
-                    id="login-password" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    />
-                </div>
-                <Button type="submit" className="w-full mt-2" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Login
-                </Button>
-              </form>
-            </TabsContent>
-            <TabsContent value="signup">
-               <form onSubmit={handleSignup} className="grid gap-4 mt-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input 
-                    id="signup-password" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    />
-                </div>
-                <Button type="submit" className="w-full mt-2" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign Up
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+           <form onSubmit={handleLogin} className="grid gap-4 mt-4">
+            <div className="grid gap-2">
+              <Label htmlFor="login-email">Email</Label>
+              <Input
+                id="login-email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="login-password">Password</Label>
+              <Input 
+                id="login-password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                />
+            </div>
+            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Login
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
