@@ -1,6 +1,6 @@
 
 import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup, where } from 'firebase/firestore';
-import { ref, listAll, getMetadata, uploadBytes } from 'firebase/storage';
+import { ref, listAll, getMetadata, uploadBytes, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { OtaSession, Device } from './data';
 
@@ -155,6 +155,16 @@ export async function uploadFileToStorage(file: File, path: string): Promise<Sto
         return newFile;
     } catch(error) {
         console.error("Error uploading file:", error);
+        throw error;
+    }
+}
+
+export async function deleteStorageFile(path: string): Promise<void> {
+    try {
+        const fileRef = ref(storage, path);
+        await deleteObject(fileRef);
+    } catch (error) {
+        console.error(`Error deleting file ${path}:`, error);
         throw error;
     }
 }

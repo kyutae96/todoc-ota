@@ -1,8 +1,9 @@
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useTransition } from 'react';
-import { getStorageFiles, uploadFileToStorage } from '@/lib/api';
+import { getStorageFiles, uploadFileToStorage, deleteStorageFile } from '@/lib/api';
 import { type StorageFile } from '@/lib/api';
 import {
   FileText,
@@ -11,7 +12,8 @@ import {
   RefreshCw,
   Search,
   Upload,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/auth-context';
@@ -28,6 +30,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
@@ -71,6 +84,7 @@ export function StorageClient() {
   const { register, handleSubmit, formState: { isSubmitting }, reset } = useForm<Inputs>();
   const [isUploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('OTA/');
+  const [fileToDelete, setFileToDelete] = useState<StorageFile | null>(null);
 
   const fetchData = (path: string = currentPath) => {
     startDataTransition(async () => {
@@ -124,6 +138,27 @@ export function StorageClient() {
         });
     }
   };
+
+  const handleDelete = async () => {
+    if (!fileToDelete) return;
+    try {
+        await deleteStorageFile(fileToDelete.path);
+        toast({
+            title: "Deletion Successful",
+            description: `File "${fileToDelete.name}" has been deleted.`,
+        });
+        fetchData();
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: "There was an error deleting the file.",
+        });
+    } finally {
+        setFileToDelete(null);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -201,7 +236,11 @@ export function StorageClient() {
             <Card 
                 key={file.id} 
                 className={cn("flex flex-col justify-between", file.type === 'folder' && "cursor-pointer hover:border-primary/50 hover:shadow-md transition-shadow")}
-                onClick={() => file.type === 'folder' && handleFolderClick(file.path)}
+                onClick={(e) => {
+                    // prevent navigation when clicking on a button inside the card
+                    if (e.target instanceof HTMLElement && e.target.closest('button')) return;
+                    if (file.type === 'folder') handleFolderClick(file.path);
+                }}
             >
               <CardHeader className="flex-row items-center gap-4 space-y-0 pb-2">
                 {file.type === 'folder' ? 
@@ -209,6 +248,16 @@ export function StorageClient() {
                   <FileText className="size-8 text-primary" />
                 }
                 <CardTitle className="font-sans text-base font-medium leading-tight truncate" title={file.name}>{file.name}</CardTitle>
+                 {userRole === 'admin' && file.type === 'file' && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="size-7 ml-auto shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => setFileToDelete(file)}
+                    >
+                        <Trash2 className="size-4" />
+                    </Button>
+                )}
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground pb-4">
                  <p className='truncate'>Path: /{file.path}</p>
@@ -229,6 +278,20 @@ export function StorageClient() {
             </div>
         )}
       </div>
+      <AlertDialog open={!!fileToDelete} onOpenChange={(open) => !open && setFileToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the file <span className="font-medium text-foreground">{fileToDelete?.name}</span>.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
