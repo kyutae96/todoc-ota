@@ -45,6 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Label } from './ui/label';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { useAuth } from '@/contexts/auth-context';
 
 type Inputs = {
     file: FileList;
@@ -83,6 +84,7 @@ export function StorageClient() {
   const [isLoading, startDataTransition] = useTransition();
   const [filter, setFilter] = useState('');
   const { toast } = useToast();
+  const { userRole } = useAuth();
   
   const { register, handleSubmit, formState: { isSubmitting }, reset } = useForm<Inputs>();
   const folderForm = useForm<FolderInputs>({
@@ -229,6 +231,7 @@ export function StorageClient() {
                       <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
                       Refresh
                   </Button>
+                  {userRole === 'admin' && (
                   <>
                   <Dialog open={isFolderDialogOpen} onOpenChange={setFolderDialogOpen}>
                       <DialogTrigger asChild>
@@ -310,6 +313,7 @@ export function StorageClient() {
                     </DialogContent>
                   </Dialog>
                   </>
+                  )}
               </div>
             </CardContent>
           </Card>
@@ -348,14 +352,16 @@ export function StorageClient() {
                   <FileText className="size-8 text-primary" />
                 }
                 <CardTitle className="font-sans text-base font-medium leading-tight truncate" title={file.name}>{file.name}</CardTitle>
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="size-7 ml-auto shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => setItemToDelete(file)}
-                >
-                    <Trash2 className="size-4" />
-                </Button>
+                {userRole === 'admin' && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="size-7 ml-auto shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => setItemToDelete(file)}
+                    >
+                        <Trash2 className="size-4" />
+                    </Button>
+                )}
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground pb-4">
                  <p className='truncate'>Path: /{file.path}</p>
