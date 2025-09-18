@@ -1,3 +1,4 @@
+'use client';
 
 import { UserList } from "@/components/user-list";
 import { withAuth } from "@/contexts/auth-context";
