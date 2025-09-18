@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,6 +25,7 @@ interface User {
   email: string;
   avatar: string;
   organization?: string;
+  role: Role;
 }
 
 interface AuthContextType {
@@ -37,6 +38,7 @@ interface AuthContextType {
   logout: () => void;
   UserAvatar: React.FC<{className?: string}>;
   isLoading: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,53 +51,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const isAuthenticated = !!user;
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const role = userData.role || 'unauthorized';
-            
-            setUser({
-              uid: firebaseUser.uid,
-              name: userData.name || firebaseUser.email?.split('@')[0] || 'User',
-              email: firebaseUser.email || '',
-              avatar: userData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-              organization: userData.organization
-            });
-            setUserRole(role);
+  const fetchUserData = useCallback(async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const role = userData.role || 'unauthorized';
+          
+          setUser({
+            uid: firebaseUser.uid,
+            name: userData.name || firebaseUser.email?.split('@')[0] || 'User',
+            email: firebaseUser.email || '',
+            avatar: userData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+            organization: userData.organization,
+            role: role,
+          });
+          setUserRole(role);
 
-        } else {
-            // This case handles users created in Auth but not yet in Firestore.
-            const isOwner = firebaseUser.email === OWNER_EMAIL;
-            const newUserRole = isOwner ? 'admin' : 'unauthorized';
-            const newUser: User = {
-                uid: firebaseUser.uid,
-                name: firebaseUser.email?.split('@')[0] || 'User',
-                email: firebaseUser.email || '',
-                avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-            };
-            await setDoc(doc(db, 'users', firebaseUser.uid), { 
-                email: newUser.email,
-                name: newUser.name,
-                avatar: newUser.avatar,
-                role: newUserRole
-            });
-
-            setUser(newUser);
-            setUserRole(newUserRole);
-        }
       } else {
-        setUser(null);
-        setUserRole('unauthorized');
-      }
-      setIsLoading(false);
-    });
+          // This case handles users created in Auth but not yet in Firestore.
+          const isOwner = firebaseUser.email === OWNER_EMAIL;
+          const newUserRole = isOwner ? 'admin' : 'unauthorized';
+          const newUser: User = {
+              uid: firebaseUser.uid,
+              name: firebaseUser.email?.split('@')[0] || 'User',
+              email: firebaseUser.email || '',
+              avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+              role: newUserRole,
+          };
+          await setDoc(doc(db, 'users', firebaseUser.uid), { 
+              email: newUser.email,
+              name: newUser.name,
+              avatar: newUser.avatar,
+              role: newUserRole
+          });
 
-    return () => unsubscribe();
+          setUser(newUser);
+          setUserRole(newUserRole);
+      }
+    } else {
+      setUser(null);
+      setUserRole('unauthorized');
+    }
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, fetchUserData);
+    return () => unsubscribe();
+  }, [fetchUserData]);
+
+  const refreshUser = useCallback(async () => {
+    await fetchUserData(auth.currentUser);
+  }, [fetchUserData]);
 
   const login = async (email: string, pass: string): Promise<void> => {
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -138,44 +147,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role: newUserRole
     };
     await setDoc(doc(db, 'users', firebaseUser.uid), userData);
-    
-    // Don't sign out unauthorized users, let the UI handle them
   };
 
   const logout = async () => {
     await signOut(auth);
   };
 
-  const dynamicUser = useMemo(() => {
-    if (!user) return null;
-    const displayName = user.name || user.email;
-    return {
-      ...user,
-      name: userRole === 'admin' ? `${displayName} (Admin)` : displayName,
-    }
-  }, [user, userRole])
-
-
   const UserAvatar: React.FC<{className?: string}> = ({className}) => {
-    if (!dynamicUser) return <Skeleton className={className} />;
+    if (!user) return <Skeleton className={className} />;
     return (
       <Avatar className={className}>
-        <AvatarImage src={dynamicUser.avatar} alt={dynamicUser.name} />
-        <AvatarFallback>{dynamicUser.name.charAt(0)}</AvatarFallback>
+        <AvatarImage src={user.avatar} alt={user.name} />
+        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
       </Avatar>
     );
   }
   
   const value: AuthContextType = { 
     isAuthenticated, 
-    user: dynamicUser, 
+    user, 
     userRole, 
     setUserRole, 
     login, 
     signup,
     logout, 
     UserAvatar, 
-    isLoading 
+    isLoading,
+    refreshUser
   };
 
   return (

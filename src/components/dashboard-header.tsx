@@ -21,6 +21,7 @@ function getTitleFromPath(path: string): string {
   if (path.startsWith('/dashboard/sessions/')) return 'Session Details';
   if (path.includes('/sessions')) return 'Sessions';
   if (path.includes('/users')) return 'User Management';
+  if (path.includes('/mypage')) return 'My Page';
   return 'Dashboard';
 }
 
@@ -79,6 +80,10 @@ export function DashboardHeader() {
                         </p>
                     </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/mypage">My Page</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                     Log out

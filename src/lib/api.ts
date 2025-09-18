@@ -223,6 +223,17 @@ export async function getUsers(): Promise<User[]> {
     }
 }
 
+export async function updateUser(uid: string, data: Partial<User>): Promise<void> {
+    try {
+        const userRef = doc(db, 'users', uid);
+        await updateDoc(userRef, data);
+    } catch (error) {
+        console.error(`Error updating user ${uid}:`, error);
+        throw error;
+    }
+}
+
+
 export async function updateUserRole(uid: string, role: Role): Promise<void> {
     try {
         const userRef = doc(db, 'users', uid);
