@@ -253,15 +253,15 @@ export function StorageClient() {
                                         rules={{ 
                                             required: "Folder name is required",
                                             pattern: {
-                                                value: /^ver\(\d+\.\d+\.\d+\)$/,
-                                                message: "Folder name must be in the format ver(major.minor.fetch)"
+                                                value: /^ver\d+\.\d+\.\d+$/,
+                                                message: "Folder name must be in the format verX.Y.Z (e.g., ver1.0.0)"
                                             }
                                         }}
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Folder Name</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="ver(1.0.0)" {...field} />
+                                                    <Input placeholder="ver1.0.0" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
