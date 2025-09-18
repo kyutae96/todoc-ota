@@ -1,4 +1,5 @@
 
+
 import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup, where } from 'firebase/firestore';
 import { ref, listAll, getMetadata, uploadBytes, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
@@ -171,6 +172,25 @@ export async function deleteStorageFile(path: string): Promise<void> {
     }
 }
 
+export async function deleteStorageFolder(path: string): Promise<void> {
+    try {
+        const folderRef = ref(storage, path);
+        const listResult = await listAll(folderRef);
+
+        // Delete all files in the folder
+        const fileDeletePromises = listResult.items.map(itemRef => deleteObject(itemRef));
+        await Promise.all(fileDeletePromises);
+
+        // Recursively delete all subfolders
+        const folderDeletePromises = listResult.prefixes.map(prefixRef => deleteStorageFolder(prefixRef.fullPath));
+        await Promise.all(folderDeletePromises);
+
+    } catch (error) {
+        console.error(`Error deleting folder ${path}:`, error);
+        throw error;
+    }
+}
+
 export async function createFolder(folderName: string, path: string): Promise<void> {
     if (!folderName) {
         throw new Error('Folder name cannot be empty');
@@ -188,3 +208,4 @@ export async function createFolder(folderName: string, path: string): Promise<vo
         throw error;
     }
 }
+

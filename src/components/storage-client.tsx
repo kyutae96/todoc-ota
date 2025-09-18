@@ -1,10 +1,11 @@
 
 
+
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useTransition } from 'react';
-import { getStorageFiles, uploadFileToStorage, deleteStorageFile, createFolder } from '@/lib/api';
+import { getStorageFiles, uploadFileToStorage, deleteStorageFile, deleteStorageFolder, createFolder } from '@/lib/api';
 import { type StorageFile } from '@/lib/api';
 import {
   FileText,
@@ -98,7 +99,7 @@ export function StorageClient() {
   const [isUploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [isFolderDialogOpen, setFolderDialogOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('OTA/');
-  const [fileToDelete, setFileToDelete] = useState<StorageFile | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<StorageFile | null>(null);
 
   const fetchData = (path: string = currentPath) => {
     startDataTransition(async () => {
@@ -190,22 +191,27 @@ export function StorageClient() {
   };
 
   const handleDelete = async () => {
-    if (!fileToDelete) return;
+    if (!itemToDelete) return;
     try {
-        await deleteStorageFile(fileToDelete.path);
+        if (itemToDelete.type === 'file') {
+            await deleteStorageFile(itemToDelete.path);
+        } else {
+            await deleteStorageFolder(itemToDelete.path);
+        }
+        
         toast({
             title: "Deletion Successful",
-            description: `File "${fileToDelete.name}" has been deleted.`,
+            description: `${itemToDelete.type === 'file' ? 'File' : 'Folder'} "${itemToDelete.name}" has been deleted.`,
         });
         fetchData();
     } catch (error) {
         toast({
             variant: "destructive",
             title: "Deletion Failed",
-            description: "There was an error deleting the file.",
+            description: `There was an error deleting the ${itemToDelete.type}.`,
         });
     } finally {
-        setFileToDelete(null);
+        setItemToDelete(null);
     }
   };
 
@@ -349,12 +355,12 @@ export function StorageClient() {
                   <FileText className="size-8 text-primary" />
                 }
                 <CardTitle className="font-sans text-base font-medium leading-tight truncate" title={file.name}>{file.name}</CardTitle>
-                 {userRole === 'admin' && file.type === 'file' && (
+                 {userRole === 'admin' && (
                     <Button 
                         variant="ghost" 
                         size="icon" 
                         className="size-7 ml-auto shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => setFileToDelete(file)}
+                        onClick={() => setItemToDelete(file)}
                     >
                         <Trash2 className="size-4" />
                     </Button>
@@ -379,12 +385,12 @@ export function StorageClient() {
             </div>
         )}
       </div>
-      <AlertDialog open={!!fileToDelete} onOpenChange={(open) => !open && setFileToDelete(null)}>
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the file <span className="font-medium text-foreground">{fileToDelete?.name}</span>.
+                    This action cannot be undone. This will permanently delete the {itemToDelete?.type} <span className="font-medium text-foreground">{itemToDelete?.name}</span>{itemToDelete?.type === 'folder' && ' and all of its contents'}.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
