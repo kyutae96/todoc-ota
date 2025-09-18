@@ -19,31 +19,29 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [organization, setOrganization] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  // This will be adapted later
   const { login } = useAuth();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRequestAccess = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      await login(email, password);
-      toast({
-        title: 'Login Successful',
-        description: "Welcome back!",
-      });
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message || 'Invalid credentials or account not authorized.',
-      });
-    } finally {
+    toast({
+        title: 'Access Request Submitted',
+        description: "Your request has been sent for approval. You will be notified via email when you have access.",
+    });
+    // In a real scenario, you'd call a function here to save the user's request.
+    // For now, we'll just show the toast and clear the form.
+    setTimeout(() => {
         setIsLoading(false);
-    }
+        setEmail('');
+        setName('');
+        setOrganization('');
+    }, 2000);
   };
 
   return (
@@ -55,13 +53,13 @@ export default function LoginPage() {
                     <Flame className="size-8" />
                 </div>
             </div>
-          <CardTitle className="text-2xl font-headline">Welcome</CardTitle>
+          <CardTitle className="text-2xl font-headline">Request Access</CardTitle>
           <CardDescription>
-            Enter your credentials to access your account
+            Enter your details to request access to the dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent>
-           <form onSubmit={handleLogin} className="grid gap-4 mt-4">
+           <form onSubmit={handleRequestAccess} className="grid gap-4 mt-4">
             <div className="grid gap-2">
               <Label htmlFor="login-email">Email</Label>
               <Input
@@ -75,19 +73,32 @@ export default function LoginPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="login-password">Password</Label>
+              <Label htmlFor="login-name">Name</Label>
+              <Input
+                id="login-name"
+                type="text"
+                placeholder="Your Name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="login-organization">Organization</Label>
               <Input 
-                id="login-password" 
-                type="password" 
+                id="login-organization" 
+                type="text" 
+                placeholder="Your Company"
                 required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={organization}
+                onChange={(e) => setOrganization(e.target.value)}
                 disabled={isLoading}
                 />
             </div>
             <Button type="submit" className="w-full mt-2" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login
+                Request Access
             </Button>
           </form>
         </CardContent>

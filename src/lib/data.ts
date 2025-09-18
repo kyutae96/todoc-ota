@@ -47,5 +47,6 @@ export type User = {
     name: string;
     email: string;
     avatar: string;
+    organization?: string;
     role: 'manager' | 'admin' | 'unauthorized';
 }
