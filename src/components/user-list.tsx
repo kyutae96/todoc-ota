@@ -13,9 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { getUsers, updateUserRole } from '@/lib/api';
 import { type User, type Role } from '@/lib/data';
-import { ArrowUpDown, Search, RefreshCw } from 'lucide-react';
+import { ArrowUpDown, Search, RefreshCw, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from './ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
@@ -146,6 +146,23 @@ export function UserList() {
             Refresh
         </Button>
       </div>
+
+       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Info className="size-5" />
+            <span>Role Explanations</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {Object.entries(roleDescriptions).map(([role, description]) => (
+            <div key={role}>
+              <span className="font-semibold capitalize">{role}:</span>
+              <span className="text-muted-foreground ml-2">{description}</span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-0">
