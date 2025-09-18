@@ -1,7 +1,8 @@
 
 
+
 import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup, where, updateDoc } from 'firebase/firestore';
-import { ref, listAll, getMetadata, uploadBytes, deleteObject } from 'firebase/storage';
+import { ref, listAll, getMetadata, uploadBytes, deleteObject, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { OtaSession, Device, User, Role } from './data';
 
@@ -240,6 +241,19 @@ export async function updateUserRole(uid: string, role: Role): Promise<void> {
         await updateDoc(userRef, { role });
     } catch (error) {
         console.error(`Error updating role for user ${uid}:`, error);
+        throw error;
+    }
+}
+
+export async function uploadAvatar(uid: string, file: File): Promise<string> {
+    const filePath = `avatars/${uid}/${file.name}`;
+    const storageRef = ref(storage, filePath);
+    try {
+        const uploadResult = await uploadBytes(storageRef, file);
+        const downloadUrl = await getDownloadURL(uploadResult.ref);
+        return downloadUrl;
+    } catch (error) {
+        console.error("Error uploading avatar:", error);
         throw error;
     }
 }

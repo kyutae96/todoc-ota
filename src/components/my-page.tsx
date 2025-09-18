@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser } from '@/lib/api';
-import { Loader2 } from 'lucide-react';
+import { updateUser, uploadAvatar } from '@/lib/api';
+import { Loader2, Upload } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { useState, useRef } from 'react';
 
 const profileSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -24,6 +25,8 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export function MyPage() {
   const { user, UserAvatar, isLoading, refreshUser } = useAuth();
   const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -54,6 +57,31 @@ export function MyPage() {
         title: 'Error',
         description: 'Failed to update your profile.',
       });
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !event.target.files || event.target.files.length === 0) {
+      return;
+    }
+    const file = event.target.files[0];
+    setIsUploading(true);
+    try {
+      const avatarUrl = await uploadAvatar(user.uid, file);
+      await updateUser(user.uid, { avatar: avatarUrl });
+      await refreshUser();
+      toast({
+        title: 'Avatar Updated',
+        description: 'Your new avatar has been saved.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description: 'There was an error uploading your new avatar.',
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
   
@@ -93,7 +121,27 @@ export function MyPage() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center gap-6">
-          <UserAvatar className="size-20" />
+            <div className="relative group">
+                <UserAvatar className="size-20" />
+                <button 
+                    onClick={() => fileInputRef.current?.click()} 
+                    className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    disabled={isUploading}
+                >
+                    {isUploading ? (
+                        <Loader2 className="size-6 text-white animate-spin" />
+                    ) : (
+                        <Upload className="size-6 text-white" />
+                    )}
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                    accept="image/png, image/jpeg, image/gif"
+                />
+            </div>
           <div>
             <h2 className="text-xl font-semibold">{user.name}</h2>
             <p className="text-muted-foreground">{user.email}</p>
