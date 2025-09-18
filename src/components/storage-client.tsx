@@ -112,31 +112,48 @@ export function StorageClient() {
   }, [files, filter]);
 
   const onUploadSubmit: SubmitHandler<Inputs> = async (data) => {
-    const file = data.file[0];
-    if (!file) {
-        toast({
-            variant: "destructive",
-            title: "Upload Error",
-            description: "Please select a file to upload.",
-        });
-        return;
+    const files = data.file;
+    if (!files || files.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload Error',
+        description: 'Please select at least one file to upload.',
+      });
+      return;
     }
-    try {
+
+    let successfulUploads = 0;
+    let failedUploads = 0;
+    const totalFiles = files.length;
+
+    for (const file of Array.from(files)) {
+      try {
         await uploadFileToStorage(file, currentPath);
-        toast({
-            title: "Upload Successful",
-            description: `File "${file.name}" has been uploaded to ${currentPath}.`,
-        });
-        fetchData(); // Refresh file list
-        reset();
-        setUploadDialogOpen(false);
-    } catch (error) {
-        toast({
-            variant: "destructive",
-            title: "Upload Failed",
-            description: "There was an error uploading your file.",
-        });
+        successfulUploads++;
+      } catch (error) {
+        console.error(`Failed to upload ${file.name}:`, error);
+        failedUploads++;
+      }
     }
+
+    if (successfulUploads > 0) {
+      toast({
+        title: 'Upload Complete',
+        description: `${successfulUploads} of ${totalFiles} file(s) uploaded successfully to ${currentPath}.`,
+      });
+    }
+
+    if (failedUploads > 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description: `${failedUploads} file(s) could not be uploaded.`,
+      });
+    }
+    
+    fetchData(); // Refresh file list
+    reset();
+    setUploadDialogOpen(false);
   };
 
   const handleDelete = async () => {
@@ -183,21 +200,21 @@ export function StorageClient() {
                       <DialogTrigger asChild>
                         <Button className="w-full md:w-auto bg-accent hover:bg-accent/90">
                           <Upload className="mr-2 h-4 w-4" />
-                          Upload File
+                          Upload File(s)
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
                         <form onSubmit={handleSubmit(onUploadSubmit)}>
                           <DialogHeader>
-                            <DialogTitle>Upload File</DialogTitle>
+                            <DialogTitle>Upload Files</DialogTitle>
                             <DialogDescription>
-                              The file will be uploaded to the current directory: <span className="font-medium text-foreground">{currentPath}</span>
+                              The files will be uploaded to the current directory: <span className="font-medium text-foreground">{currentPath}</span>
                             </DialogDescription>
                           </DialogHeader>
                           <div className="grid gap-4 py-4">
                             <div className="grid w-full max-w-sm items-center gap-1.5">
-                              <Label htmlFor="file">File</Label>
-                              <Input id="file" type="file" {...register("file", { required: true })} />
+                              <Label htmlFor="file">Files</Label>
+                              <Input id="file" type="file" {...register("file", { required: true })} multiple />
                             </div>
                           </div>
                           <DialogFooter>
