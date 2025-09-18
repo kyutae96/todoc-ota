@@ -16,33 +16,58 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Flame, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [organization, setOrganization] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  // This will be adapted later
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
   const { toast } = useToast();
 
-  const handleRequestAccess = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    toast({
-        title: 'Access Request Submitted',
-        description: "Your request has been sent for approval. You will be notified via email when you have access.",
-    });
-    // In a real scenario, you'd call a function here to save the user's request.
-    // For now, we'll just show the toast and clear the form.
-    setTimeout(() => {
-        setIsLoading(false);
-        setEmail('');
-        setName('');
-        setOrganization('');
-    }, 2000);
+    try {
+      await login(email, password);
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+        await signup(email, password);
+        // Special case for owner to log in immediately
+        try {
+            await login(email, password);
+            router.push('/dashboard');
+        } catch (loginError: any) {
+             toast({
+                title: 'Sign Up Successful',
+                description: 'Your account has been created and is awaiting administrator approval.',
+            });
+        }
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Sign Up Failed',
+            description: error.message,
+        });
+    } finally {
+        setIsLoading(false);
+    }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -53,54 +78,80 @@ export default function LoginPage() {
                     <Flame className="size-8" />
                 </div>
             </div>
-          <CardTitle className="text-2xl font-headline">Request Access</CardTitle>
+          <CardTitle className="text-2xl font-headline">Access Dashboard</CardTitle>
           <CardDescription>
-            Enter your details to request access to the dashboard.
+            Log in or create an account to continue
           </CardDescription>
         </CardHeader>
         <CardContent>
-           <form onSubmit={handleRequestAccess} className="grid gap-4 mt-4">
-            <div className="grid gap-2">
-              <Label htmlFor="login-email">Email</Label>
-              <Input
-                id="login-email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="login-name">Name</Label>
-              <Input
-                id="login-name"
-                type="text"
-                placeholder="Your Name"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="login-organization">Organization</Label>
-              <Input 
-                id="login-organization" 
-                type="text" 
-                placeholder="Your Company"
-                required 
-                value={organization}
-                onChange={(e) => setOrganization(e.target.value)}
-                disabled={isLoading}
-                />
-            </div>
-            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Request Access
-            </Button>
-          </form>
+            <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">Log In</TabsTrigger>
+                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
+                <TabsContent value="login">
+                    <form onSubmit={handleLogin} className="grid gap-4 mt-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="login-email">Email</Label>
+                            <Input
+                                id="login-email"
+                                type="email"
+                                placeholder="m@example.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="login-password">Password</Label>
+                            <Input 
+                                id="login-password" 
+                                type="password" 
+                                required 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={isLoading}
+                                />
+                        </div>
+                        <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Log In
+                        </Button>
+                    </form>
+                </TabsContent>
+                <TabsContent value="signup">
+                     <form onSubmit={handleSignUp} className="grid gap-4 mt-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="signup-email">Email</Label>
+                            <Input
+                                id="signup-email"
+                                type="email"
+                                placeholder="m@example.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="signup-password">Password</Label>
+                            <Input 
+                                id="signup-password" 
+                                type="password" 
+                                required 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={isLoading}
+                                />
+                        </div>
+                        <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Sign Up
+                        </Button>
+                    </form>
+                </TabsContent>
+            </Tabs>
         </CardContent>
       </Card>
     </div>

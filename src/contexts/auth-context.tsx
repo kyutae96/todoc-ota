@@ -39,6 +39,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const OWNER_EMAIL = 'kyuate0523@to-doc.com';
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<Role>('unauthorized');
@@ -55,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const role = userData.role || 'unauthorized';
 
             if (role === 'unauthorized') {
-                setUser(null); // Effectively logs them out of the UI
+                setUser(null);
             } else {
                  setUser({
                     uid: firebaseUser.uid,
@@ -66,7 +68,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 setUserRole(role);
             }
         } else {
-             // Create user doc if it doesn't exist (first login)
+            // This case should ideally be handled by signup, but as a fallback:
+            const isOwner = firebaseUser.email === OWNER_EMAIL;
+            const newUserRole = isOwner ? 'admin' : 'unauthorized';
             const newUser: User = {
                 uid: firebaseUser.uid,
                 name: firebaseUser.email?.split('@')[0] || 'User',
@@ -77,10 +81,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: newUser.email,
                 name: newUser.name,
                 avatar: newUser.avatar,
-                role: 'unauthorized'
+                role: newUserRole
             });
-            setUser(null);
-            setUserRole('unauthorized');
+            if (newUserRole === 'unauthorized') {
+                setUser(null);
+                setUserRole('unauthorized');
+            } else {
+                setUser(newUser);
+                setUserRole(newUserRole);
+            }
         }
       } else {
         setUser(null);
@@ -96,47 +105,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
     const firebaseUser = userCredential.user;
     
-    // Check user role after sign-in
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     const userDoc = await getDoc(userDocRef);
 
     if (userDoc.exists()) {
         const userData = userDoc.data();
         if (userData.role === 'unauthorized') {
-            await signOut(auth); // Sign out unauthorized user
+            await signOut(auth);
             throw new Error('Your account has not been approved by an administrator.');
+        }
+        // Special check for owner email on login
+        if (userData.email === OWNER_EMAIL && userData.role !== 'admin') {
+            await setDoc(userDocRef, { role: 'admin' }, { merge: true });
         }
     } else {
         // This handles a case where a user exists in Auth but not in Firestore.
-        // It will create their user doc and then they'll need to be approved.
+        const isOwner = firebaseUser.email === OWNER_EMAIL;
+        const newUserRole = isOwner ? 'admin' : 'unauthorized';
         await setDoc(userDocRef, {
             email: firebaseUser.email,
             name: firebaseUser.email?.split('@')[0] || 'New User',
             avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-            role: 'unauthorized'
+            role: newUserRole
         });
-        await signOut(auth);
-        throw new Error('Your account has been created and is pending approval.');
+        if (newUserRole === 'unauthorized') {
+            await signOut(auth);
+            throw new Error('Your account has been created and is pending approval.');
+        }
     }
   };
   
   const signup = async (email: string, pass: string): Promise<void> => {
-    // This function is no longer used from the UI but is kept for potential future use.
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     const firebaseUser = userCredential.user;
     
+    const isOwner = firebaseUser.email === OWNER_EMAIL;
+    const newUserRole = isOwner ? 'admin' : 'unauthorized';
+
     const userData = {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         name: firebaseUser.email?.split('@')[0] || 'New User',
         avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-        role: 'unauthorized'
+        role: newUserRole
     };
     await setDoc(doc(db, 'users', firebaseUser.uid), userData);
-
-    // Sign out immediately after sign up, user needs admin approval.
-    await signOut(auth);
-    throw new Error('Account created successfully. An administrator must approve your account before you can log in.');
+    
+    if (newUserRole === 'unauthorized') {
+      await signOut(auth);
+      throw new Error('Account created successfully. An administrator must approve your account before you can log in.');
+    }
   };
 
   const logout = async () => {
