@@ -14,7 +14,7 @@ const firebaseConfig = {
   "appId": "1:995016378087:web:3c702cecc5d02579cbc442",
   // TODO: Replace with your actual storage bucket from the Firebase console.
   "storageBucket": "todoc-ota.appspot.com",
-  // TODO: Replace with your actual API key from the Firebase console.
+  // TODO: Replace with your actual API key from tfileshe Firebase console.
   "apiKey": "AIzaSyAioH5aUo19iEWtSyqrkm21scRLkI3nhts",
   // TODO: Replace with your actual auth domain from the Firebase console.
   "authDomain": "todoc-ota.firebaseapp.com",
