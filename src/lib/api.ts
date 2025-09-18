@@ -86,9 +86,9 @@ export async function getOtaSession(sessionId: string): Promise<OtaSession | und
     }
 }
 
-export async function getStorageFiles(): Promise<StorageFile[]> {
+export async function getStorageFiles(path: string = 'OTA/'): Promise<StorageFile[]> {
     try {
-        const listRef = ref(storage, 'OTA/');
+        const listRef = ref(storage, path);
         const res = await listAll(listRef);
         const files: StorageFile[] = [];
 
@@ -97,7 +97,7 @@ export async function getStorageFiles(): Promise<StorageFile[]> {
             files.push({
                 id: item.fullPath,
                 name: item.name,
-                path: item.fullPath.substring(0, item.fullPath.lastIndexOf('/')),
+                path: item.fullPath,
                 size: metadata.size,
                 type: 'file',
                 createdAt: new Date(metadata.timeCreated),
@@ -109,11 +109,11 @@ export async function getStorageFiles(): Promise<StorageFile[]> {
             files.push({
                 id: prefix.fullPath,
                 name: prefix.name,
-                path: prefix.fullPath.substring(0, prefix.fullPath.lastIndexOf('/')),
+                path: prefix.fullPath,
                 size: 0,
                 type: 'folder',
-                createdAt: new Date(), 
-                updatedAt: new Date(),
+                createdAt: new Date(), // Prefixes don't have creation dates
+                updatedAt: new Date(), // Prefixes don't have update dates
             });
         }
         return files;
@@ -124,8 +124,7 @@ export async function getStorageFiles(): Promise<StorageFile[]> {
 }
 
 export async function uploadFileToStorage(file: File, path: string): Promise<StorageFile> {
-    const basePath = 'OTA';
-    const fullPath = path ? `${basePath}/${path}/${file.name}` : `${basePath}/${file.name}`;
+    const fullPath = `${path}${file.name}`;
     console.log(`Uploading file: ${file.name} to ${fullPath}`);
     
     try {
@@ -136,7 +135,7 @@ export async function uploadFileToStorage(file: File, path: string): Promise<Sto
         const newFile: StorageFile = {
             id: metadata.fullPath,
             name: metadata.name,
-            path: metadata.fullPath.substring(0, metadata.fullPath.lastIndexOf('/')),
+            path: metadata.fullPath,
             size: metadata.size,
             type: 'file',
             createdAt: new Date(metadata.timeCreated),

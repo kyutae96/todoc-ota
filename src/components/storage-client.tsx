@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Search,
   Upload,
+  ChevronRight
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/auth-context';
@@ -32,8 +33,31 @@ import { Label } from './ui/label';
 
 type Inputs = {
     file: FileList;
-    path: string;
 };
+
+function Breadcrumbs({ path, onNavigate }: { path: string, onNavigate: (newPath: string) => void }) {
+    const parts = useMemo(() => path.replace(/\/$/, '').split('/'), [path]);
+    
+    return (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+            {parts.map((part, index) => {
+                const currentPath = parts.slice(0, index + 1).join('/') + '/';
+                return (
+                    <React.Fragment key={index}>
+                        {index > 0 && <ChevronRight className="h-4 w-4" />}
+                        <button 
+                            onClick={() => onNavigate(currentPath)} 
+                            className={cn("hover:text-foreground", { 'font-semibold text-foreground': index === parts.length - 1 })}
+                            disabled={index === parts.length - 1}
+                        >
+                            {part}
+                        </button>
+                    </React.Fragment>
+                );
+            })}
+        </div>
+    );
+}
 
 export function StorageClient() {
   const [files, setFiles] = useState<StorageFile[]>([]);
@@ -44,22 +68,28 @@ export function StorageClient() {
   
   const { register, handleSubmit, formState: { isSubmitting }, reset } = useForm<Inputs>();
   const [isUploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [currentPath, setCurrentPath] = useState('OTA/');
 
-  const fetchData = () => {
+  const fetchData = (path: string = currentPath) => {
     startDataTransition(async () => {
-      const fetchedFiles = await getStorageFiles();
+      const fetchedFiles = await getStorageFiles(path);
       const processedFiles = fetchedFiles.map(file => ({
         ...file,
         createdAt: new Date(file.createdAt),
         updatedAt: new Date(file.updatedAt),
       }));
       setFiles(processedFiles);
+      setCurrentPath(path);
     });
   }
   
   useEffect(() => {
-    fetchData();
+    fetchData('OTA/');
   }, []);
+
+  const handleFolderClick = (path: string) => {
+    fetchData(path);
+  };
 
   const filteredFiles = useMemo(() => {
     return files.filter(file => file.name.toLowerCase().includes(filter.toLowerCase()));
@@ -76,10 +106,10 @@ export function StorageClient() {
         return;
     }
     try {
-        await uploadFileToStorage(file, data.path);
+        await uploadFileToStorage(file, currentPath);
         toast({
             title: "Upload Successful",
-            description: `File "${file.name}" has been uploaded.`,
+            description: `File "${file.name}" has been uploaded to ${currentPath}.`,
         });
         fetchData(); // Refresh file list
         reset();
@@ -93,62 +123,61 @@ export function StorageClient() {
     }
   };
 
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input 
-            placeholder="Filter files and folders..." 
-            className="pl-10"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={fetchData} disabled={isLoading} className="w-full md:w-auto">
-                <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
-                Refresh
-            </Button>
-            {userRole === 'admin' && (
-              <Dialog open={isUploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full md:w-auto bg-accent hover:bg-accent/90">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload File
+       <Card>
+          <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Filter files and folders..." 
+                  className="pl-10"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => fetchData()} disabled={isLoading} className="w-full md:w-auto">
+                      <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
+                      Refresh
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <form onSubmit={handleSubmit(onUploadSubmit)}>
-                    <DialogHeader>
-                      <DialogTitle>Upload File</DialogTitle>
-                      <DialogDescription>
-                        Select a file and specify a destination path within the /OTA folder.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid w-full max-w-sm items-center gap-1.5">
-                        <Label htmlFor="file">File</Label>
-                        <Input id="file" type="file" {...register("file", { required: true })} />
-                      </div>
-                      <div className="grid w-full max-w-sm items-center gap-1.5">
-                        <Label htmlFor="path">Sub-path (optional)</Label>
-                        <Input id="path" placeholder="e.g. firmware/v1.0" {...register("path")} />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Upload
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            )}
-        </div>
-      </div>
+                  {userRole === 'admin' && (
+                    <Dialog open={isUploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="w-full md:w-auto bg-accent hover:bg-accent/90">
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload File
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <form onSubmit={handleSubmit(onUploadSubmit)}>
+                          <DialogHeader>
+                            <DialogTitle>Upload File</DialogTitle>
+                            <DialogDescription>
+                              The file will be uploaded to the current directory: <span className="font-medium text-foreground">{currentPath}</span>
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid w-full max-w-sm items-center gap-1.5">
+                              <Label htmlFor="file">File</Label>
+                              <Input id="file" type="file" {...register("file", { required: true })} />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button type="submit" disabled={isSubmitting}>
+                              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Upload
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+              </div>
+            </CardContent>
+          </Card>
+      
+      <Breadcrumbs path={currentPath} onNavigate={fetchData} />
 
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {isLoading ? (
@@ -167,7 +196,11 @@ export function StorageClient() {
           filteredFiles
             .sort((a,b) => (a.type > b.type) ? -1 : ((b.type > a.type) ? 1 : 0)) // folders first
             .map(file => (
-            <Card key={file.id} className="flex flex-col justify-between">
+            <Card 
+                key={file.id} 
+                className={cn("flex flex-col justify-between", file.type === 'folder' && "cursor-pointer hover:border-primary/50 hover:shadow-md transition-shadow")}
+                onClick={() => file.type === 'folder' && handleFolderClick(file.path)}
+            >
               <CardHeader className="flex-row items-center gap-4 space-y-0 pb-2">
                 {file.type === 'folder' ? 
                   <Folder className="size-8 text-accent" /> :
@@ -176,7 +209,7 @@ export function StorageClient() {
                 <CardTitle className="font-sans text-base font-medium leading-tight truncate" title={file.name}>{file.name}</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground pb-4">
-                <p>Path: /{file.path}</p>
+                 <p className='truncate'>Path: /{file.path}</p>
               </CardContent>
               <CardFooter className="text-xs text-muted-foreground pt-2 border-t">
                 {file.type === 'file' ? (
@@ -190,7 +223,7 @@ export function StorageClient() {
           ))
         ) : (
             <div className="col-span-full text-center py-12">
-                <p className="text-muted-foreground">No files or folders found in /OTA.</p>
+                <p className="text-muted-foreground">This folder is empty.</p>
             </div>
         )}
       </div>
