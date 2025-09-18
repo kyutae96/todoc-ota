@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useTransition } from 'react';
-import { getStorageFiles, uploadFileToStorage, deleteStorageFile } from '@/lib/api';
+import { getStorageFiles, uploadFileToStorage, deleteStorageFile, createFolder } from '@/lib/api';
 import { type StorageFile } from '@/lib/api';
 import {
   FileText,
@@ -13,7 +13,8 @@ import {
   Search,
   Upload,
   ChevronRight,
-  Trash2
+  Trash2,
+  FolderPlus
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/auth-context';
@@ -50,6 +51,10 @@ type Inputs = {
     file: FileList;
 };
 
+type FolderInputs = {
+    folderName: string;
+};
+
 function Breadcrumbs({ path, onNavigate }: { path: string, onNavigate: (newPath: string) => void }) {
     const parts = useMemo(() => path.replace(/\/$/, '').split('/'), [path]);
     
@@ -82,7 +87,10 @@ export function StorageClient() {
   const { toast } = useToast();
   
   const { register, handleSubmit, formState: { isSubmitting }, reset } = useForm<Inputs>();
+  const folderForm = useForm<FolderInputs>();
+  
   const [isUploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [isFolderDialogOpen, setFolderDialogOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('OTA/');
   const [fileToDelete, setFileToDelete] = useState<StorageFile | null>(null);
 
@@ -155,6 +163,25 @@ export function StorageClient() {
     reset();
     setUploadDialogOpen(false);
   };
+  
+  const onCreateFolderSubmit: SubmitHandler<FolderInputs> = async (data) => {
+    try {
+        await createFolder(data.folderName, currentPath);
+        toast({
+            title: 'Folder Created',
+            description: `Folder "${data.folderName}" created successfully.`
+        });
+        fetchData();
+        folderForm.reset();
+        setFolderDialogOpen(false);
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error Creating Folder',
+            description: String(error),
+        });
+    }
+  };
 
   const handleDelete = async () => {
     if (!fileToDelete) return;
@@ -196,6 +223,38 @@ export function StorageClient() {
                       Refresh
                   </Button>
                   {userRole === 'admin' && (
+                    <>
+                    <Dialog open={isFolderDialogOpen} onOpenChange={setFolderDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full md:w-auto">
+                                <FolderPlus className="mr-2 h-4 w-4" />
+                                New Folder
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <form onSubmit={folderForm.handleSubmit(onCreateFolderSubmit)}>
+                                <DialogHeader>
+                                    <DialogTitle>Create New Folder</DialogTitle>
+                                    <DialogDescription>
+                                        Enter a name for your new folder in <span className="font-medium text-foreground">{currentPath}</span>.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid w-full max-w-sm items-center gap-1.5">
+                                        <Label htmlFor="folderName">Folder Name</Label>
+                                        <Input id="folderName" type="text" {...folderForm.register("folderName", { required: true })} />
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" disabled={folderForm.formState.isSubmitting}>
+                                        {folderForm.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Create Folder
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+
                     <Dialog open={isUploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                       <DialogTrigger asChild>
                         <Button className="w-full md:w-auto bg-accent hover:bg-accent/90">
@@ -226,6 +285,7 @@ export function StorageClient() {
                         </form>
                       </DialogContent>
                     </Dialog>
+                    </>
                   )}
               </div>
             </CardContent>

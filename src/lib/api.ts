@@ -105,6 +105,8 @@ export async function getStorageFiles(path: string = 'OTA/'): Promise<StorageFil
 
         for (const item of res.items) {
             const metadata = await getMetadata(item);
+            // Don't show the placeholder file used for creating folders
+            if (item.name === '.placeholder') continue;
             files.push({
                 id: item.fullPath,
                 name: item.name,
@@ -165,6 +167,24 @@ export async function deleteStorageFile(path: string): Promise<void> {
         await deleteObject(fileRef);
     } catch (error) {
         console.error(`Error deleting file ${path}:`, error);
+        throw error;
+    }
+}
+
+export async function createFolder(folderName: string, path: string): Promise<void> {
+    if (!folderName) {
+        throw new Error('Folder name cannot be empty');
+    }
+    const fullPath = `${path}${folderName}/.placeholder`;
+    console.log(`Creating folder: ${folderName} at ${path}`);
+    
+    try {
+        const storageRef = ref(storage, fullPath);
+        // Create an empty file to represent the folder
+        const placeholder = new Blob([''], { type: 'text/plain' });
+        await uploadBytes(storageRef, placeholder);
+    } catch(error) {
+        console.error("Error creating folder:", error);
         throw error;
     }
 }
