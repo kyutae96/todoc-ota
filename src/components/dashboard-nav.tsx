@@ -3,27 +3,32 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FolderKanban, Smartphone, History } from 'lucide-react';
+import { FolderKanban, Smartphone, History, Users } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 const navItems = [
-  { href: '/dashboard/storage', label: 'Storage', icon: FolderKanban },
-  { href: '/dashboard/devices', label: 'Devices', icon: Smartphone },
-  { href: '/dashboard/sessions', label: 'Sessions', icon: History },
+  { href: '/dashboard/storage', label: 'Storage', icon: FolderKanban, roles: ['admin', 'manager'] },
+  { href: '/dashboard/devices', label: 'Devices', icon: Smartphone, roles: ['admin', 'manager'] },
+  { href: '/dashboard/sessions', label: 'Sessions', icon: History, roles: ['admin', 'manager'] },
+  { href: '/dashboard/users', label: 'Users', icon: Users, roles: ['admin'] },
 ];
 
 export function DashboardNav() {
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
+  const { userRole } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  const visibleNavItems = navItems.filter(item => item.roles.includes(userRole));
+
   return (
     <SidebarMenu>
-      {navItems.map((item) => (
+      {visibleNavItems.map((item) => (
         <SidebarMenuItem key={item.href}>
           <SidebarMenuButton
             className={cn(

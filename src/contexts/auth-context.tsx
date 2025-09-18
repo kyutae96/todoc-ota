@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
@@ -23,6 +23,7 @@ interface User {
   name: string;
   email: string;
   avatar: string;
+  organization?: string;
 }
 
 interface AuthContextType {
@@ -58,12 +59,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             if (role === 'unauthorized') {
                 setUser(null);
+                await signOut(auth);
             } else {
                  setUser({
                     uid: firebaseUser.uid,
                     name: userData.name || firebaseUser.email?.split('@')[0] || 'User',
                     email: firebaseUser.email || '',
                     avatar: userData.avatar || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+                    organization: userData.organization
                 });
                 setUserRole(role);
             }
@@ -86,6 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (newUserRole === 'unauthorized') {
                 setUser(null);
                 setUserRole('unauthorized');
+                await signOut(auth);
             } else {
                 setUser(newUser);
                 setUserRole(newUserRole);
@@ -207,19 +211,25 @@ export const useAuth = () => {
   return context;
 };
 
+const adminRoutes = ['/dashboard/users'];
+
 // A HOC to protect routes
 export function withAuth(Component: React.ComponentType<any>) {
   return function AuthenticatedComponent(props: any) {
     const { isAuthenticated, isLoading, userRole } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
       if (!isLoading) {
         if (!isAuthenticated || userRole === 'unauthorized') {
           router.push('/login');
+        } else if (userRole !== 'admin' && adminRoutes.some(route => pathname.startsWith(route))) {
+          // If not an admin and trying to access an admin route, redirect
+          router.push('/dashboard');
         }
       }
-    }, [isAuthenticated, isLoading, router, userRole]);
+    }, [isAuthenticated, isLoading, router, userRole, pathname]);
 
     if (isLoading || !isAuthenticated || userRole === 'unauthorized') {
       return (
@@ -227,6 +237,19 @@ export function withAuth(Component: React.ComponentType<any>) {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       )
+    }
+
+    // Final check during render, in case useEffect hasn't run yet
+    if (userRole !== 'admin' && adminRoutes.some(route => pathname.startsWith(route))) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem-1px)]">
+                <h1 className="text-2xl font-bold">Access Denied</h1>
+                <p>You do not have permission to view this page.</p>
+                <Button onClick={() => router.push('/dashboard')} className="mt-4">
+                    Return to Dashboard
+                </Button>
+            </div>
+        );
     }
 
     return <Component {...props} />;

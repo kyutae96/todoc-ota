@@ -1,9 +1,9 @@
 
 
-import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup, where } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, limit, collectionGroup, where, updateDoc } from 'firebase/firestore';
 import { ref, listAll, getMetadata, uploadBytes, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
-import { OtaSession, Device } from './data';
+import { OtaSession, Device, User, Role } from './data';
 
 export async function getDevices(): Promise<Device[]> {
     try {
@@ -209,3 +209,26 @@ export async function createFolder(folderName: string, path: string): Promise<vo
     }
 }
 
+export async function getUsers(): Promise<User[]> {
+    try {
+        const usersQuery = query(collection(db, 'users'));
+        const usersSnapshot = await getDocs(usersQuery);
+        return usersSnapshot.docs.map(doc => ({
+            uid: doc.id,
+            ...doc.data()
+        } as User));
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        return [];
+    }
+}
+
+export async function updateUserRole(uid: string, role: Role): Promise<void> {
+    try {
+        const userRef = doc(db, 'users', uid);
+        await updateDoc(userRef, { role });
+    } catch (error) {
+        console.error(`Error updating role for user ${uid}:`, error);
+        throw error;
+    }
+}
