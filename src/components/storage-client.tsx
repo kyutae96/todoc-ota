@@ -89,7 +89,11 @@ export function StorageClient() {
   const { toast } = useToast();
   
   const { register, handleSubmit, formState: { isSubmitting }, reset } = useForm<Inputs>();
-  const folderForm = useForm<FolderInputs>();
+  const folderForm = useForm<FolderInputs>({
+    defaultValues: {
+      folderName: '',
+    },
+  });
   
   const [isUploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [isFolderDialogOpen, setFolderDialogOpen] = useState(false);
@@ -392,5 +396,3 @@ export function StorageClient() {
     </div>
   );
 }
-
-    
