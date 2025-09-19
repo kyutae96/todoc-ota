@@ -1,6 +1,6 @@
-'use client';
+\'use client\';
 
-import { useState, useEffect, useMemo, useTransition } from 'react';
+import { useState, useEffect, useMemo, useTransition } from \'react\';
 import {
   Table,
   TableBody,
@@ -8,31 +8,32 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { getUsers, updateUserRole } from '@/lib/api';
-import { type User, type Role } from '@/lib/data';
-import { ArrowUpDown, Search, RefreshCw, Info } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/auth-context';
-import { useToast } from '@/hooks/use-toast';
+} from \'@/components/ui/table\';
+import { Input } from \'@/components/ui/input\';
+import { Button } from \'@/components/ui/button\';
+import { getUsers, updateUserRole } from \'@/lib/api\';
+import { type User, type Role } from \'@/lib/data\';
+import { ArrowUpDown, Search, RefreshCw, Info } from \'lucide-react\';
+import { Skeleton } from \'@/components/ui/skeleton\';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from \'./ui/card\';
+import { cn } from \'@/lib/utils\';
+import { useAuth } from \'@/contexts/auth-context\';
+import { useToast } from \'@/hooks/use-toast\';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from \"@/components/ui/select\"
+import { UserAvatar } from \'@/components/ui/avatar\'; // Assuming UserAvatar is available from here, or adjust if it's from @/contexts/auth-context directly
 
 const PAGE_SIZE = 10;
 
 const roleDescriptions: Record<Role, string> = {
-    admin: 'Full access to all features, including user management and storage deletion.',
-    manager: 'Can view devices and sessions, and browse storage, but cannot manage users or delete files.',
-    unauthorized: 'No access to any dashboard features. Account is pending administrator approval.',
+    admin: \'Full access to all features, including user management and storage deletion.\',
+    manager: \'Can view devices and sessions, and browse storage, but cannot manage users or delete files.\',
+    unauthorized: \'No access to any dashboard features. Account is pending administrator approval.\',
 };
 
 export function UserList() {
@@ -41,9 +42,9 @@ export function UserList() {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
 
-  const [filter, setFilter] = useState('');
-  const [sortBy, setSortBy] = useState<keyof User | null>('email');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [filter, setFilter] = useState(\'\');
+  const [sortBy, setSortBy] = useState<keyof User | null>(\'email\');
+  const [sortOrder, setSortOrder] = useState<\'asc\' | \'desc\'>(\'asc\');
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = () => {
@@ -65,25 +66,25 @@ export function UserList() {
       // Optimistically update UI
       setUsers(users.map(u => u.uid === uid ? { ...u, role: newRole } : u));
       toast({
-        title: "Role Updated",
+        title: \"Role Updated\",
         description: `User role has been successfully changed to ${newRole}.`,
       });
     } catch (error) {
-      console.error("Failed to update role:", error);
+      console.error(\"Failed to update role:\", error);
       toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: "There was an error updating the user's role.",
+        variant: \"destructive\",
+        title: \"Update Failed\",
+        description: \"There was an error updating the user\'s role.\",
       });
     }
   };
 
   const handleSort = (field: keyof User) => {
     if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === \'asc\' ? \'desc\' : \'asc\');
     } else {
       setSortBy(field);
-      setSortOrder('asc');
+      setSortOrder(\'asc\');
     }
   };
 
@@ -102,8 +103,8 @@ export function UserList() {
         copy.sort((a, b) => {
             const aValue = a[sortBy];
             const bValue = b[sortBy];
-            if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-            if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+            if (aValue < bValue) return sortOrder === \'asc\' ? -1 : 1;
+            if (aValue > bValue) return sortOrder === \'asc\' ? 1 : -1;
             return 0;
         });
         return copy;
@@ -120,10 +121,10 @@ export function UserList() {
   const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
 
   const fields: { key: keyof User, label: string }[] = [
-    { key: 'name', label: 'Name' },
-    { key: 'email', label: 'Email' },
-    { key: 'organization', label: 'Organization' },
-    { key: 'role', label: 'Role' },
+    { key: \'name\', label: \'Name\' },
+    { key: \'email\', label: \'Email\' },
+    { key: \'organization\', label: \'Organization\' },
+    { key: \'role\', label: \'Role\' },
   ];
 
   return (
@@ -142,7 +143,7 @@ export function UserList() {
           />
         </div>
          <Button variant="outline" onClick={fetchData} disabled={isLoading}>
-            <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
+            <RefreshCw className={cn(\"mr-2 h-4 w-4\", isLoading && \"animate-spin\")} />
             Refresh
         </Button>
       </div>
@@ -192,9 +193,12 @@ export function UserList() {
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((user) => (
                     <TableRow key={user.uid}>
-                      <TableCell>{user.name}</TableCell>
+                      <TableCell className="flex items-center gap-2">
+                        <UserAvatar photoUrl={user.avatar} className="size-6" />
+                        {user.name}
+                      </TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.organization || 'N/A'}</TableCell>
+                      <TableCell>{user.organization || \'N/A\'}</TableCell>
                       <TableCell>
                           <Select
                             value={user.role}
