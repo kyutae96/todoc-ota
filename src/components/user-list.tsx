@@ -26,7 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { UserAvatar } from '@/components/ui/avatar'; // Assuming UserAvatar is available from here, or adjust if it's from @/contexts/auth-context directly
+
+// Removed: import { UserAvatar } from '@/components/ui/avatar';
 
 const PAGE_SIZE = 10;
 
@@ -39,7 +40,7 @@ const roleDescriptions: Record<Role, string> = {
 export function UserList() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, startDataTransition] = useTransition();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useAuth(); // Reverted UserAvatar from useAuth
   const { toast } = useToast();
 
   const [filter, setFilter] = useState('');
@@ -143,7 +144,7 @@ export function UserList() {
           />
         </div>
          <Button variant="outline" onClick={fetchData} disabled={isLoading}>
-            <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")}/>
+            <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
             Refresh
         </Button>
       </div>
@@ -193,10 +194,7 @@ export function UserList() {
                 ) : paginatedData.length > 0 ? (
                   paginatedData.map((user) => (
                     <TableRow key={user.uid}>
-                      <TableCell className="flex items-center gap-2">
-                        <UserAvatar photoUrl={user.avatar} className="size-6" />
-                        {user.name}
-                      </TableCell>
+                      <TableCell>{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.organization || 'N/A'}</TableCell>
                       <TableCell>
