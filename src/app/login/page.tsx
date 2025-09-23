@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Flame, Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react'; // Changed Flame to Download
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -76,7 +76,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
                 <div className="flex size-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Flame className="size-8" />
+                    <Download className="size-8" /> {/* Changed Flame to Download */}
                 </div>
             </div>
           <CardTitle className="text-2xl font-headline">Access Dashboard</CardTitle>

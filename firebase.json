@@ -8,5 +8,13 @@
   },
   "storage": {
     "rules": "storage.rules"
-  }
+  },
+  "hosting": { 
+    "site":"todoc-ota-6afc0",
+    "public":"out",
+    "ignore":["**/.*","**/node_modules/**"],
+    "rewrites":[{ "source":"**","destination":"/index.html"}] 
+} 
+
+  
 }
