@@ -98,25 +98,30 @@ export function StorageClient() {
   const [currentPath, setCurrentPath] = useState('OTA/');
   const [itemToDelete, setItemToDelete] = useState<StorageFile | null>(null);
 
+  const ensureTrailingSlash = (path: string) => {
+    return path.endsWith('/') ? path : path + '/';
+  };
+
   const fetchData = (path: string = currentPath) => {
     startDataTransition(async () => {
-      const fetchedFiles = await getStorageFiles(path);
+      const formattedPath = ensureTrailingSlash(path);
+      const fetchedFiles = await getStorageFiles(formattedPath);
       const processedFiles = fetchedFiles.map(file => ({
         ...file,
         createdAt: new Date(file.createdAt),
         updatedAt: new Date(file.updatedAt),
       }));
       setFiles(processedFiles);
-      setCurrentPath(path);
+      setCurrentPath(formattedPath);
     });
-  }
+  };
   
   useEffect(() => {
     fetchData('OTA/');
   }, []);
 
   const handleFolderClick = (path: string) => {
-    fetchData(path);
+    fetchData(ensureTrailingSlash(path));
   };
 
   const filteredFiles = useMemo(() => {
@@ -256,7 +261,7 @@ export function StorageClient() {
                                       rules={{ 
                                           required: "Folder name is required",
                                           pattern: {
-                                              value: /^ver\d+\.\d+\.\d+$/,
+                                              value: /^ver\\d+\\.\\d+\\.\\d+$/,
                                               message: "Folder name must be in the format verX.Y.Z (e.g., ver1.0.0)"
                                           }
                                       }}
