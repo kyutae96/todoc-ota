@@ -224,6 +224,23 @@ export async function getUsers(): Promise<User[]> {
     }
 }
 
+export async function getUserEmailByUid(uid: string): Promise<string | undefined> {
+    try {
+        const userDocRef = doc(db, 'users', uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            return userData.email;
+        } else {
+            console.log(`No user found with UID: ${uid}`);
+            return undefined;
+        }
+    } catch (error) {
+        console.error(`Error fetching user email for UID ${uid}:`, error);
+        return undefined;
+    }
+}
+
 export async function updateUser(uid: string, data: Partial<User>): Promise<void> {
     try {
         const userRef = doc(db, 'users', uid);

@@ -14,6 +14,7 @@ export type OtaSession = {
   errorCode: string | null;
   appVersion: string;
   deviceName: string;
+  deviceAddress: string | null;
   events: OtaEvent[];
 }
 
@@ -50,3 +51,5 @@ export type User = {
     organization?: string;
     role: 'manager' | 'admin' | 'unauthorized';
 }
+// data.ts
+export type Role = 'manager' | 'admin' | 'unauthorized';

@@ -1,6 +1,6 @@
 'use client';
 
-import { getOtaSession } from '@/lib/api';
+import { getOtaSession, getUserEmailByUid } from '@/lib/api';
 import { OtaEvent, OtaSession } from '@/lib/data';
 import { useEffect, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -39,6 +39,7 @@ function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType, lab
 
 export function SessionDetails({ sessionId }: { sessionId: string }) {
   const [session, setSession] = useState<OtaSession | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isLoading, startDataTransition] = useTransition();
 
   useEffect(() => {
@@ -51,6 +52,12 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
           endedAt: fetchedSession.endedAt ? new Date(fetchedSession.endedAt) : null,
           events: fetchedSession.events.map(e => ({ ...e, at: e.at ? new Date(e.at) : new Date() }))
         });
+        if (fetchedSession.userId) {
+            const email = await getUserEmailByUid(fetchedSession.userId);
+            setUserEmail(email || fetchedSession.userId);
+        } else {
+            setUserEmail('N/A');
+        }
       }
     });
   }, [sessionId]);
@@ -84,8 +91,18 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
             </CardHeader>
             <CardContent>
                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <DetailItem icon={Server} label="Device Name" value={session.deviceName} />
-                    <DetailItem icon={User} label="User ID" value={session.userId} />
+                 <DetailItem
+  icon={Server}
+  label="Device Name"
+  value={
+    <div>
+      <div>{session.deviceName}</div>
+      <div className="text-xs text-muted-foreground">{session.deviceAddress}</div>
+    </div>
+  }
+/>
+
+                    <DetailItem icon={User} label="User" value={userEmail || session.userId} />
                     <DetailItem icon={GitBranch} label="App Version" value={session.appVersion} />
                     <DetailItem icon={FileText} label="Source Path" value={session.sourcePath} />
                     <DetailItem icon={Calendar} label="Started At" value={session.startedAt.toLocaleString()} />
